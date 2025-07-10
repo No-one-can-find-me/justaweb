@@ -3,12 +3,22 @@ import sqlite3
 import hashlib
 from datetime import datetime
 import os
+import logging
+
+# Configure logging for production
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-change-this-in-production')
 
 # Database path - use /tmp for ephemeral storage on Koyeb
 DB_PATH = os.environ.get('DATABASE_PATH', '/tmp/database.db')
+
+# Configure Flask for production
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 # Database initialization
 def init_db():
@@ -60,7 +70,23 @@ def get_comments():
 @app.route('/health')
 def health_check():
     """Health check endpoint for Koyeb"""
-    return {'status': 'healthy', 'message': 'Application is running'}, 200
+    try:
+        # Test database connection
+        conn = sqlite3.connect(DB_PATH)
+        conn.close()
+        return {'status': 'healthy', 'message': 'Application is running', 'database': 'connected'}, 200
+    except Exception as e:
+        logger.error(f"Health check failed: {str(e)}")
+        return {'status': 'unhealthy', 'message': 'Database connection failed'}, 503
+
+@app.errorhandler(404)
+def not_found_error(error):
+    return render_template('base.html'), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    logger.error(f"Internal server error: {str(error)}")
+    return render_template('base.html'), 500
 
 @app.route('/')
 def home():

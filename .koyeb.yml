@@ -1,4 +1,4 @@
-name: mysecondweb
+name: justaweb
 services:
   - name: web
     type: web
@@ -10,13 +10,22 @@ services:
         protocol: http
     env:
       - key: SECRET_KEY
-        value: koyeb-production-secret-key-2024-secure
+        value: koyeb-production-secret-key-2024-secure-huntsman
       - key: PORT
         value: "8000"
+      - key: DATABASE_PATH
+        value: "/tmp/database.db"
+      - key: FLASK_ENV
+        value: "production"
     health_check:
       http:
         path: /health
         port: 8000
+        initial_delay_seconds: 30
+        timeout_seconds: 10
+        interval_seconds: 30
     scaling:
       min: 1
       max: 1
+    regions:
+      - fra
