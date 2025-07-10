@@ -1,0 +1,22 @@
+name: mysecondweb
+services:
+  - name: web
+    type: web
+    build:
+      type: buildpack
+    instance_type: nano
+    ports:
+      - port: 8000
+        protocol: http
+    env:
+      - key: SECRET_KEY
+        value: koyeb-production-secret-key-2024-secure
+      - key: PORT
+        value: "8000"
+    health_check:
+      http:
+        path: /health
+        port: 8000
+    scaling:
+      min: 1
+      max: 1

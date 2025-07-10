@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Comments - Huntsman Space{% endblock %}
+
+{% block content %}
+<div class="comment-section">
+    <h2 class="comment-title">Comments</h2>
+    
+    {% if session.username %}
+        <div class="comment-form">
+            <h3 style="color: #00ffff; margin-bottom: 1rem;">Add a Comment</h3>
+            <form method="POST">
+                <div class="form-group">
+                    <textarea name="comment" placeholder="Share your thoughts..." required></textarea>
+                </div>
+                <button type="submit" class="btn">Post Comment</button>
+            </form>
+        </div>
+    {% else %}
+        <div style="text-align: center; margin-bottom: 2rem; padding: 2rem; background: rgba(0, 0, 0, 0.6); border-radius: 10px; border: 2px solid #00ffff;">
+            <p style="color: #00ffff; font-size: 1.2rem; margin-bottom: 1rem;">Want to join the conversation?</p>
+            <a href="{{ url_for('login') }}" class="btn">Login to Comment</a>
+        </div>
+    {% endif %}
+    
+    <div class="comments-list">
+        {% if comments %}
+            {% for comment in comments|reverse %}
+                <div class="comment-item">
+                    <div class="comment-author">{{ comment.username }}</div>
+                    <div class="comment-date">{{ comment.timestamp }}</div>
+                    <div class="comment-text">{{ comment.text }}</div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div style="text-align: center; padding: 3rem; color: #888;">
+                <p style="font-size: 1.2rem; margin-bottom: 1rem;">No comments yet.</p>
+                <p>Be the first to share your thoughts!</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

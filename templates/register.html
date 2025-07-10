@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Register - Huntsman Space{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2 class="form-title">Join Huntsman Space</h2>
+    
+    <form method="POST">
+        <div class="form-group">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required minlength="6">
+        </div>
+        
+        <div class="form-group">
+            <label for="confirm_password">Confirm Password:</label>
+            <input type="password" id="confirm_password" name="confirm_password" required>
+        </div>
+        
+        <button type="submit" class="btn">Register</button>
+    </form>
+    
+    <div style="text-align: center; margin-top: 2rem;">
+        <p>Already have an account? <a href="{{ url_for('login') }}" style="color: #00ffff;">Login here</a></p>
+    </div>
+</div>
+
+<script>
+    // Password confirmation validation
+    document.getElementById('confirm_password').addEventListener('input', function() {
+        const password = document.getElementById('password').value;
+        const confirmPassword = this.value;
+        
+        if (password !== confirmPassword) {
+            this.setCustomValidity('Passwords do not match');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+</script>
+{% endblock %}
