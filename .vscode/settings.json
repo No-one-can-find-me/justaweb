@@ -1,0 +1,5 @@
+{
+    "zencoder.displayDebugInfo": true,
+    "zencoder.repoInfo.currentWarningState": true,
+    "zencoder.requirementsTool.enable": false
+}
