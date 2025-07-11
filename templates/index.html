@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero-section">
+    <div class="hero-content">
+        <h2 class="welcome-title">Welcome to Huntsman Space</h2>
+        <p class="hero-subtitle">Your Ultimate Gaming Destination</p>
+        
+        <div class="social-buttons">
+            <a href="https://youtube.com" target="_blank" class="social-btn youtube-btn">
+                <i class="fab fa-youtube"></i>
+                <span>YouTube</span>
+            </a>
+            <a href="https://kick.com" target="_blank" class="social-btn kick-btn">
+                <i class="fas fa-play"></i>
+                <span>Kick</span>
+            </a>
+            <a href="https://discord.com" target="_blank" class="social-btn discord-btn">
+                <i class="fab fa-discord"></i>
+                <span>Discord</span>
+            </a>
+        </div>
+    </div>
+</section>
+
+<section class="about-section">
+    <div class="container">
+        <h2 class="section-title">About Me</h2>
+        <div class="about-content">
+            <div class="video-container">
+                <iframe 
+                    width="100%" 
+                    height="315" 
+                    src="https://www.youtube.com/embed/DKhehyWLVwc" 
+                    title="YouTube video player" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                    allowfullscreen>
+                </iframe>
+            </div>
+            <div class="about-text">
+                <p>Welcome to my gaming universe! I'm passionate about creating content, streaming, and building an amazing community of gamers. Join me on this incredible journey through the world of gaming!</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="quick-comments-section">
+    <div class="container">
+        <h2 class="section-title">Latest Comments</h2>
+        <div class="quick-comments">
+            {% if comments %}
+                {% for comment in comments[-3:] %}
+                    <div class="comment-card">
+                        <div class="comment-header">
+                            <span class="comment-author">
+                                <i class="fas fa-user-circle"></i>
+                                {{ comment.user }}
+                            </span>
+                            <span class="comment-time">{{ comment.timestamp }}</span>
+                        </div>
+                        <p class="comment-text">{{ comment.text }}</p>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-comments-card">
+                    <i class="fas fa-comment-slash"></i>
+                    <h3>No Comments Yet</h3>
+                    <p>Be the first to start the conversation!</p>
+                </div>
+            {% endif %}
+        </div>
+        <div class="comment-cta">
+            <a href="{{ url_for('comments_page') }}" class="cta-btn">
+                <i class="fas fa-comments"></i>
+                View All Comments
+            </a>
+        </div>
+    </div>
+</section>
+
+<div class="scroll-indicator">
+    <div class="scroll-arrow">
+        <i class="fas fa-chevron-down"></i>
+    </div>
+</div>
+{% endblock %}
