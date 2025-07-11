@@ -25,7 +25,7 @@
     
     <div class="comments-list">
         {% if comments %}
-            {% for comment in comments|reverse %}
+            {% for comment in comments %}
                 <div class="comment-item">
                     <div class="comment-author">{{ comment.username }}</div>
                     <div class="comment-date">{{ comment.timestamp }}</div>

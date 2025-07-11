@@ -93,7 +93,7 @@
 <div class="comment-section">
     <h2 class="comment-title">Latest Comments</h2>
     {% if comments %}
-        {% for comment in comments[-3:] %}
+        {% for comment in comments[:3] %}
             <div class="comment-item">
                 <div class="comment-author">{{ comment.username }}</div>
                 <div class="comment-date">{{ comment.timestamp }}</div>
