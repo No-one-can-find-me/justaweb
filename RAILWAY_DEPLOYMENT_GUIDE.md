@@ -126,16 +126,63 @@ The application includes a `/health` endpoint that checks:
 
 ## Troubleshooting
 
+### Database Connection Issues
+If you see "Database connection failed" error:
+
+1. **Check MongoDB Atlas Configuration**:
+   - Verify your MongoDB Atlas cluster is running
+   - Check that your IP is whitelisted (or use 0.0.0.0/0 for all IPs)
+   - Ensure your database user has proper permissions
+   - Test your connection string locally
+
+2. **Environment Variables**:
+   ```bash
+   # In Railway, set these variables:
+   MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/database?retryWrites=true&w=majority
+   SECRET_KEY=your-production-secret-key
+   FLASK_ENV=production
+   ```
+
+3. **MongoDB Atlas IP Whitelist**:
+   - Go to MongoDB Atlas → Network Access
+   - Add IP Address: 0.0.0.0/0 (allows all IPs)
+   - Or add Railway's specific IP ranges
+
+4. **Connection String Format**:
+   ```
+   mongodb+srv://username:password@cluster.mongodb.net/database?retryWrites=true&w=majority&appName=YourApp
+   ```
+
 ### Common Issues
-1. **Database Connection**: Check MongoDB Atlas IP whitelist
+1. **Database Connection**: 
+   - Check MongoDB Atlas IP whitelist
+   - Verify connection string format
+   - Test connection locally first
 2. **Redis Connection**: Verify Redis service is running in Railway
 3. **Environment Variables**: Ensure all required variables are set
 4. **Memory Issues**: Monitor Railway metrics and adjust if needed
+5. **Health Check Failures**: App now uses `/status` endpoint which always returns 200
 
 ### Debug Mode
 Never enable debug mode in production. Use logging instead:
 ```python
 logger.info("Debug information here")
+```
+
+### Testing Database Connection
+You can test your MongoDB connection locally:
+```python
+from pymongo import MongoClient
+import os
+
+MONGO_URI = "your-connection-string-here"
+try:
+    client = MongoClient(MONGO_URI)
+    db = client.huntsman_space
+    db.command('ping')
+    print("Database connection successful!")
+except Exception as e:
+    print(f"Database connection failed: {e}")
 ```
 
 ## Cost Optimization

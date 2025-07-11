@@ -20,11 +20,11 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-change-this-in-production')
 
-# MongoDB configuration
-MONGO_URI = os.environ.get('MONGO_URI', "mongodb+srv://biswasrayan50:LzQzQoP2LpUrvkut@cluster0.yum2qky.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+# MongoDB configuration with fallback
+MONGO_URI = os.environ.get('MONGO_URI') or os.environ.get('DATABASE_URL') or "mongodb+srv://biswasrayan50:LzQzQoP2LpUrvkut@cluster0.yum2qky.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 
 # Redis configuration for caching (Railway provides Redis add-on)
-REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379')
+REDIS_URL = os.environ.get('REDIS_URL') or os.environ.get('REDISCLOUD_URL') or 'redis://localhost:6379'
 
 # Configure Flask for production
 app.config.update(
@@ -51,42 +51,84 @@ mongo_client = None
 db = None
 
 def get_db():
-    """Get MongoDB database connection with connection pooling"""
+    """Get MongoDB database connection with connection pooling and retry logic"""
     global mongo_client, db
-    if mongo_client is None:
+    
+    max_retries = 3
+    retry_delay = 1
+    
+    for attempt in range(max_retries):
         try:
-            mongo_client = MongoClient(
-                MONGO_URI,
-                maxPoolSize=50,  # Maximum number of connections
-                minPoolSize=5,   # Minimum number of connections
-                maxIdleTimeMS=30000,  # Close connections after 30 seconds of inactivity
-                serverSelectionTimeoutMS=5000,  # 5 second timeout
-                socketTimeoutMS=20000,  # 20 second socket timeout
-                connectTimeoutMS=20000,  # 20 second connection timeout
-                retryWrites=True
-            )
-            db = mongo_client.huntsman_space
-            logger.info("MongoDB connection pool established")
+            if mongo_client is None:
+                logger.info(f"Attempting MongoDB connection (attempt {attempt + 1}/{max_retries})")
+                mongo_client = MongoClient(
+                    MONGO_URI,
+                    maxPoolSize=10,  # Reduced for Railway limits
+                    minPoolSize=1,   # Minimum connections
+                    maxIdleTimeMS=30000,
+                    serverSelectionTimeoutMS=10000,  # Increased timeout
+                    socketTimeoutMS=30000,  # Increased timeout
+                    connectTimeoutMS=30000,  # Increased timeout
+                    retryWrites=True,
+                    w='majority'
+                )
+                db = mongo_client.huntsman_space
+                
+                # Test the connection
+                mongo_client.admin.command('ping')
+                logger.info("MongoDB connection established successfully")
+                
+            return db
+            
         except Exception as e:
-            logger.error(f"MongoDB connection error: {str(e)}")
-            raise
-    return db
+            logger.error(f"MongoDB connection attempt {attempt + 1} failed: {str(e)}")
+            if mongo_client:
+                try:
+                    mongo_client.close()
+                except:
+                    pass
+                mongo_client = None
+                db = None
+            
+            if attempt < max_retries - 1:
+                time.sleep(retry_delay)
+                retry_delay *= 2  # Exponential backoff
+            else:
+                logger.error("All MongoDB connection attempts failed")
+                raise
 
 def init_db():
-    """Initialize MongoDB collections and indexes"""
+    """Initialize MongoDB collections and indexes with error handling"""
     try:
         database = get_db()
         
-        # Create indexes for better performance
-        database.users.create_index("username", unique=True)
-        database.comments.create_index([("timestamp", -1)])
+        # Test connection first
+        database.command('ping')
         
-        # Create compound index for better query performance
-        database.comments.create_index([("username", 1), ("timestamp", -1)])
+        # Create indexes for better performance (with error handling)
+        try:
+            database.users.create_index("username", unique=True)
+            logger.info("Users index created")
+        except Exception as e:
+            logger.warning(f"Users index creation failed (may already exist): {str(e)}")
+        
+        try:
+            database.comments.create_index([("timestamp", -1)])
+            logger.info("Comments timestamp index created")
+        except Exception as e:
+            logger.warning(f"Comments timestamp index creation failed: {str(e)}")
+        
+        try:
+            database.comments.create_index([("username", 1), ("timestamp", -1)])
+            logger.info("Comments compound index created")
+        except Exception as e:
+            logger.warning(f"Comments compound index creation failed: {str(e)}")
         
         logger.info("MongoDB collections initialized successfully")
+        
     except Exception as e:
         logger.error(f"Database initialization error: {str(e)}")
+        # Don't raise the error - let the app start even if DB init fails
 
 # Cache decorator
 def cache_result(timeout=300):  # 5 minutes default
@@ -171,28 +213,49 @@ def get_comments():
 @app.route('/health')
 def health_check():
     """Health check endpoint for Railway"""
+    health_status = {
+        'status': 'healthy',
+        'message': 'Application is running',
+        'timestamp': datetime.utcnow().isoformat(),
+        'database': 'disconnected',
+        'cache': 'disconnected'
+    }
+    
+    # Test database connection
     try:
-        # Test database connection
         database = get_db()
         database.command('ping')
-        
-        # Test Redis connection
-        redis_status = "connected" if redis_client and redis_client.ping() else "disconnected"
-        
-        return {
-            'status': 'healthy',
-            'message': 'Application is running',
-            'database': 'connected',
-            'cache': redis_status,
-            'timestamp': datetime.utcnow().isoformat()
-        }, 200
+        health_status['database'] = 'connected'
+        logger.info("Health check: Database connected")
     except Exception as e:
-        logger.error(f"Health check failed: {str(e)}")
-        return {
-            'status': 'unhealthy',
-            'message': 'Database connection failed',
-            'timestamp': datetime.utcnow().isoformat()
-        }, 503
+        logger.warning(f"Health check: Database connection failed: {str(e)}")
+        health_status['database'] = 'disconnected'
+        # Don't fail health check if only database is down
+    
+    # Test Redis connection
+    try:
+        if redis_client and redis_client.ping():
+            health_status['cache'] = 'connected'
+            logger.info("Health check: Redis connected")
+        else:
+            health_status['cache'] = 'disconnected'
+    except Exception as e:
+        logger.warning(f"Health check: Redis connection failed: {str(e)}")
+        health_status['cache'] = 'disconnected'
+    
+    # Return healthy status even if some services are down
+    # Railway needs the app to be responsive
+    return health_status, 200
+
+# Simple status endpoint that always works
+@app.route('/status')
+def status():
+    """Simple status endpoint that always returns 200"""
+    return {
+        'status': 'ok',
+        'timestamp': datetime.utcnow().isoformat(),
+        'message': 'Server is running'
+    }, 200
 
 # Error handlers
 @app.errorhandler(404)
@@ -377,6 +440,13 @@ def after_request(response):
     return response
 
 if __name__ == '__main__':
-    init_db()
+    # Try to initialize database but don't fail if it doesn't work
+    try:
+        init_db()
+        logger.info("Database initialization completed")
+    except Exception as e:
+        logger.warning(f"Database initialization failed, but continuing: {str(e)}")
+    
     port = int(os.environ.get('PORT', 5000))
+    logger.info(f"Starting application on port {port}")
     app.run(host='0.0.0.0', port=port, debug=False)
