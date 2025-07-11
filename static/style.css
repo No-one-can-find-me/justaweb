@@ -1,0 +1,111 @@
+body {
+    background-color: #1a1a1a;
+    color: #ffffff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 50px;
+    background-color: #0d0d0d;
+    border-bottom: 2px solid #ff00ff;
+}
+
+.logo {
+    font-size: 2em;
+    font-weight: bold;
+    color: #ff00ff;
+    text-shadow: 0 0 10px #ff00ff;
+}
+
+nav a {
+    color: #ffffff;
+    text-decoration: none;
+    margin-left: 20px;
+    font-size: 1.2em;
+    transition: color 0.3s;
+}
+
+nav a:hover {
+    color: #ff00ff;
+}
+
+main {
+    padding: 50px;
+}
+
+.welcome {
+    text-align: left;
+    margin-bottom: 50px;
+}
+
+.welcome h2 {
+    font-size: 3em;
+    margin-bottom: 20px;
+}
+
+.social-links .btn {
+    margin-right: 10px;
+}
+
+.btn {
+    background-color: #ff00ff;
+    color: #ffffff;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+.btn:hover {
+    background-color: #cc00cc;
+}
+
+.about-me {
+    margin-bottom: 50px;
+}
+
+.about-me h2 {
+    font-size: 2.5em;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.video-container {
+    text-align: center;
+}
+
+.comment-section h2 {
+    font-size: 2.5em;
+    margin-bottom: 20px;
+}
+
+.login-form, .comment-form {
+    max-width: 500px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.login-form h2, .comment-form h2 {
+    font-size: 2.5em;
+    margin-bottom: 20px;
+}
+
+.login-form input, .comment-form textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ff00ff;
+    background-color: #1a1a1a;
+    color: #ffffff;
+    border-radius: 5px;
+}
+
+.login-form button, .comment-form button {
+    width: 100%;
+}
