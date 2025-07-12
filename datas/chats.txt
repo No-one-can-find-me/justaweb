@@ -6,5 +6,37 @@
     "timestamp": "2025-07-12 16:30:00",
     "edited": false,
     "reply_to": null
+  },
+  {
+    "id": 2,
+    "user": "shadowub",
+    "text": "hello",
+    "timestamp": "2025-07-12 18:36:14",
+    "edited": false,
+    "reply_to": null
+  },
+  {
+    "id": 3,
+    "user": "huntsmangg",
+    "text": "hello",
+    "timestamp": "2025-07-12 18:37:17",
+    "edited": false,
+    "reply_to": null
+  },
+  {
+    "id": 4,
+    "user": "huntsmangg",
+    "text": "hello",
+    "timestamp": "2025-07-12 19:12:41",
+    "edited": false,
+    "reply_to": null
+  },
+  {
+    "id": 5,
+    "user": "huntsmangg",
+    "text": "hello",
+    "timestamp": "2025-07-12 19:14:17",
+    "edited": false,
+    "reply_to": null
   }
 ]

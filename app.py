@@ -180,7 +180,7 @@ def send_message():
     if current_user not in ADMIN_USERS:
         if current_user in user_last_message:
             time_diff = current_time - user_last_message[current_user]
-            if time_diff < timedelta(seconds=2):
+            if time_diff < timedelta(seconds=0.1):
                 return jsonify({'success': False, 'error': 'Please wait before sending another message'}), 429
         
     user_last_message[current_user] = current_time
@@ -252,6 +252,26 @@ def get_messages():
     
     messages = load_messages()
     return jsonify({'success': True, 'messages': messages})
+
+@app.route('/get_new_messages')
+def get_new_messages():
+    if 'user' not in session:
+        return jsonify({'success': False, 'error': 'Not logged in'}), 401
+    
+    since_id = request.args.get('since', 0, type=int)
+    messages = load_messages()
+    
+    # Get all current message IDs
+    current_message_ids = [msg.get('id', 0) for msg in messages]
+    
+    # Filter messages newer than the specified ID
+    new_messages = [msg for msg in messages if msg.get('id', 0) > since_id]
+    
+    return jsonify({
+        'success': True, 
+        'messages': new_messages,
+        'current_message_ids': current_message_ids
+    })
 
 @app.route('/logout')
 def logout():
