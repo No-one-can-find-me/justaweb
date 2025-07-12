@@ -11,9 +11,16 @@
             <span class="channel-name">general</span>
             <span class="channel-description">Welcome to Huntsman Space chat</span>
         </div>
-        <div class="online-count">
-            <i class="fas fa-users"></i>
-            <span>Online</span>
+        <div class="header-actions">
+            <div class="online-count">
+                <i class="fas fa-users"></i>
+                <span>Online</span>
+                <span class="online-number" id="online-count">0</span>
+            </div>
+            <button class="members-btn" onclick="toggleMembersList()" title="Show Members">
+                <i class="fas fa-address-book"></i>
+                <span>Members</span>
+            </button>
         </div>
     </div>
 
@@ -33,12 +40,10 @@
                             <div class="avatar admin-avatar">
                                 <i class="fas fa-crown"></i>
                             </div>
-                        {% elif message.user == session.user %}
-                            <img src="{{ url_for('static', filename='images/profile_icon.jpg') }}" alt="Profile" class="avatar-img">
+                        {% elif message.profile_picture %}
+                            <img src="{{ message.profile_picture }}" alt="Profile" class="avatar-img" loading="eager" onload="handleAvatarLoad(this)" onerror="handleAvatarError(this)">
                         {% else %}
-                            <div class="avatar user-avatar" data-username="{{ message.user }}">
-                                {{ message.user[0].upper() }}
-                            </div>
+                            <img src="{{ url_for('static', filename='images/profile_icon.jpg') }}" alt="Profile" class="avatar-img" loading="eager" onload="handleAvatarLoad(this)" onerror="handleAvatarError(this)">
                         {% endif %}
                     </div>
                     
@@ -109,6 +114,28 @@
     </div>
 </div>
 
+<!-- Members List Modal -->
+<div class="members-modal" id="members-modal">
+    <div class="members-modal-content">
+        <div class="members-header">
+            <h3>
+                <i class="fas fa-users"></i>
+                Members
+                <span class="member-count" id="member-count">0</span>
+            </h3>
+            <button class="close-members" onclick="toggleMembersList()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="members-list" id="members-list">
+            <div class="loading-members">
+                <i class="fas fa-spinner fa-spin"></i>
+                <span>Loading members...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
 .chat-container {
     display: flex;
@@ -155,12 +182,49 @@
     margin-left: 8px;
 }
 
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
 .online-count {
     display: flex;
     align-items: center;
     gap: 6px;
     color: #8e9297;
     font-size: 14px;
+}
+
+.online-number {
+    background: #5865f2;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    min-width: 20px;
+    text-align: center;
+}
+
+.members-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: 1px solid #4f545c;
+    color: #b9bbbe;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s ease;
+}
+
+.members-btn:hover {
+    background: #4f545c;
+    color: #dcddde;
+    border-color: #5865f2;
 }
 
 .chat-messages {
@@ -249,7 +313,38 @@
     object-fit: cover;
     border: 3px solid #5865f2;
     box-shadow: 0 0 8px rgba(88, 101, 242, 0.3);
-    transition: transform 0.2s ease;
+    transition: all 0.3s ease;
+    opacity: 0;
+    background: linear-gradient(135deg, #5865f2, #4752c4);
+    background-size: 200% 200%;
+    animation: avatarLoading 1.5s ease-in-out infinite;
+}
+
+.avatar-img.loaded {
+    opacity: 1;
+    animation: none;
+    background: none;
+}
+
+.avatar-img.error {
+    border-color: #ed4245;
+    box-shadow: 0 0 8px rgba(237, 66, 69, 0.3);
+}
+
+@keyframes avatarLoading {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+.avatar-img:hover {
+    transform: scale(1.05);
 }
 
 .message-body {
@@ -439,6 +534,169 @@
     background: #4f545c;
 }
 
+/* Members Modal Styles */
+.members-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 1000;
+    backdrop-filter: blur(2px);
+}
+
+.members-modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #36393f;
+    border-radius: 8px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    width: 350px;
+    max-height: 500px;
+    border: 1px solid #202225;
+}
+
+.members-header {
+    background: #2f3136;
+    padding: 16px 20px;
+    border-bottom: 1px solid #202225;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 8px 8px 0 0;
+}
+
+.members-header h3 {
+    margin: 0;
+    color: #ffffff;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.member-count {
+    background: #5865f2;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    margin-left: 8px;
+}
+
+.close-members {
+    background: transparent;
+    border: none;
+    color: #b9bbbe;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.close-members:hover {
+    background: #ed4245;
+    color: white;
+}
+
+.members-list {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 8px 0;
+}
+
+.member-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 20px;
+    transition: background 0.2s ease;
+    cursor: pointer;
+}
+
+.member-item:hover {
+    background: #32353b;
+}
+
+.member-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    margin-right: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.member-avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #5865f2;
+}
+
+.member-avatar.admin {
+    background: linear-gradient(135deg, #ffd700, #ffed4e);
+    color: #2f3136;
+    font-size: 14px;
+}
+
+.member-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.member-name {
+    font-weight: 500;
+    color: #dcddde;
+    font-size: 14px;
+}
+
+.member-name.admin {
+    color: #ffd700;
+}
+
+.member-status {
+    font-size: 12px;
+    color: #72767d;
+    margin-top: 2px;
+}
+
+.member-badge {
+    background: #ffd700;
+    color: #2f3136;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: bold;
+    margin-left: 6px;
+}
+
+.loading-members {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 40px 20px;
+    color: #72767d;
+}
+
+.loading-members i {
+    font-size: 18px;
+}
+
+.no-members {
+    text-align: center;
+    padding: 40px 20px;
+    color: #72767d;
+}
+
 /* Mobile responsiveness */
 @media (max-width: 768px) {
     .chat-container {
@@ -453,6 +711,24 @@
     .channel-name {
         font-size: 14px;
     }
+    
+    .header-actions {
+        gap: 10px;
+    }
+    
+    .members-btn span {
+        display: none;
+    }
+    
+    .members-modal-content {
+        width: 90%;
+        max-width: 350px;
+    }
+    
+    .online-count span:not(.online-number) {
+        display: none;
+    }
+}
     
     .channel-description {
         display: none;
@@ -508,7 +784,7 @@
     #message-input {
         font-size: 16px; /* Prevents zoom on iOS */
     }
-}
+
 
 /* Animation for new message notification */
 @keyframes slideUp {
@@ -526,45 +802,16 @@
 <script>
 let replyingTo = null;
 
-// Generate unique colors for user avatars
-function generateUserColor(username) {
-    let hash = 0;
-    for (let i = 0; i < username.length; i++) {
-        hash = username.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    
-    // Generate a nice color palette
-    const colors = [
-        '#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6',
-        '#1abc9c', '#34495e', '#e67e22', '#95a5a6', '#8e44ad',
-        '#16a085', '#27ae60', '#2980b9', '#c0392b', '#d35400',
-        '#7f8c8d', '#f1c40f', '#e91e63', '#673ab7', '#ff5722'
-    ];
-    
-    return colors[Math.abs(hash) % colors.length];
-}
 
-// Apply unique colors to user avatars
-function applyUserColors() {
-    const avatars = document.querySelectorAll('.user-avatar[data-username]');
-    avatars.forEach(avatar => {
-        const username = avatar.getAttribute('data-username');
-        if (username) {
-            const color = generateUserColor(username);
-            avatar.style.background = color;
-        }
-    });
-}
 
-// Generate user avatar with initials or profile picture
-function createUserAvatar(username, isCurrentUser = false) {
+// Generate user avatar with profile picture
+function createUserAvatar(username, profilePicture = null, isCurrentUser = false) {
     if (username === 'huntsmangg') {
         return `<div class="avatar admin-avatar"><i class="fas fa-crown"></i></div>`;
-    } else if (isCurrentUser) {
-        return `<img src="/static/images/profile_icon.jpg" alt="Profile" class="avatar-img">`;
     } else {
-        const color = generateUserColor(username);
-        return `<div class="avatar user-avatar" data-username="${username}" style="background: ${color};">${username[0].toUpperCase()}</div>`;
+        const imgSrc = profilePicture || '/static/images/profile_icon.jpg';
+        const avatarId = `avatar-${username}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        return `<img id="${avatarId}" src="${imgSrc}" alt="Profile" class="avatar-img" loading="eager" onload="handleAvatarLoad(this)" onerror="handleAvatarError(this)">`;
     }
 }
 
@@ -576,11 +823,181 @@ function scrollToBottom() {
     }
 }
 
+// Handle avatar image load success
+function handleAvatarLoad(img) {
+    img.classList.add('loaded');
+    img.style.opacity = '1';
+    console.log('Avatar loaded successfully for:', img.id);
+}
+
+// Handle avatar image load error with automatic retry
+function handleAvatarError(img) {
+    console.warn('Avatar failed to load, retrying...', img.id);
+    
+    // Add error class for styling
+    img.classList.add('error');
+    
+    // Retry loading with cache-busting parameter
+    if (!img.dataset.retryCount) {
+        img.dataset.retryCount = '0';
+    }
+    
+    const retryCount = parseInt(img.dataset.retryCount);
+    if (retryCount < 3) {
+        img.dataset.retryCount = (retryCount + 1).toString();
+        
+        // Retry after a short delay with cache-busting
+        setTimeout(() => {
+            img.src = '/static/images/profile_icon.jpg?retry=' + retryCount + '&t=' + Date.now();
+        }, 1000 * (retryCount + 1)); // Increasing delay for each retry
+    } else {
+        // Final fallback - show a placeholder
+        img.style.display = 'none';
+        const placeholder = document.createElement('div');
+        placeholder.className = 'avatar user-avatar';
+        placeholder.style.background = '#5865f2';
+        placeholder.textContent = img.alt.charAt(0).toUpperCase();
+        img.parentNode.insertBefore(placeholder, img);
+    }
+}
+
 // Initialize page
 function initializePage() {
-    applyUserColors();
+    preloadProfileImage();
+    autoLoadExistingAvatars();
     scrollToBottom();
+    
+    // Set up real-time avatar monitoring
+    setupAvatarObserver();
 }
+
+// Automatically load existing avatars on page
+function autoLoadExistingAvatars() {
+    setTimeout(() => {
+        const existingImages = document.querySelectorAll('.avatar-img');
+        existingImages.forEach(img => {
+            if (img.complete && img.naturalWidth > 0) {
+                handleAvatarLoad(img);
+            } else if (!img.complete) {
+                // Force reload if not loaded
+                img.onload = () => handleAvatarLoad(img);
+                img.onerror = () => handleAvatarError(img);
+                
+                // Trigger load if needed
+                if (!img.src || img.src.includes('undefined')) {
+                    img.src = '/static/images/profile_icon.jpg';
+                }
+            }
+        });
+    }, 100);
+}
+
+// Set up observer to monitor for new avatars
+function setupAvatarObserver() {
+    if (!window.MutationObserver) return;
+    
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            mutation.addedNodes.forEach((node) => {
+                if (node.nodeType === 1) { // Element node
+                    // Check if the added node contains avatar images
+                    const avatars = node.querySelectorAll ? node.querySelectorAll('.avatar-img') : [];
+                    const isAvatar = node.classList && node.classList.contains('avatar-img');
+                    
+                    // Process new avatars
+                    if (isAvatar) {
+                        initializeAvatar(node);
+                    }
+                    
+                    avatars.forEach(avatar => {
+                        initializeAvatar(avatar);
+                    });
+                }
+            });
+        });
+    });
+    
+    // Start observing the chat messages container
+    const chatMessages = document.getElementById('chat-messages');
+    if (chatMessages) {
+        observer.observe(chatMessages, {
+            childList: true,
+            subtree: true
+        });
+    }
+}
+
+// Initialize a single avatar for real-time loading
+function initializeAvatar(img) {
+    if (!img || img.dataset.initialized === 'true') return;
+    
+    img.dataset.initialized = 'true';
+    img.onload = () => handleAvatarLoad(img);
+    img.onerror = () => handleAvatarError(img);
+    
+    // If image is already loaded
+    if (img.complete && img.naturalWidth > 0) {
+        handleAvatarLoad(img);
+    } else if (!img.src || img.src.includes('undefined')) {
+        img.src = '/static/images/profile_icon.jpg';
+    }
+}
+
+// Preload profile image to ensure it's in browser cache
+function preloadProfileImage() {
+    const img = new Image();
+    img.src = '/static/images/profile_icon.jpg';
+    img.onload = function() {
+        console.log('Profile image preloaded successfully');
+        window.profileImageLoaded = true;
+    };
+    img.onerror = function() {
+        console.warn('Failed to preload profile image');
+        window.profileImageLoaded = false;
+        
+        // Try alternative loading method
+        setTimeout(() => {
+            const retryImg = new Image();
+            retryImg.src = '/static/images/profile_icon.jpg?fallback=' + Date.now();
+        }, 2000);
+    };
+}
+
+// Real-time avatar health check (runs periodically)
+function checkAvatarHealth() {
+    const avatarImages = document.querySelectorAll('.avatar-img');
+    let loadingCount = 0;
+    
+    avatarImages.forEach(img => {
+        if (!img.classList.contains('loaded') && !img.classList.contains('error')) {
+            loadingCount++;
+            // Check if image is stuck loading
+            if (img.complete && img.naturalWidth === 0) {
+                handleAvatarError(img);
+            }
+        }
+    });
+    
+    // If too many avatars are stuck, refresh them
+    if (loadingCount > 3) {
+        console.log('Multiple avatars stuck loading, refreshing...');
+        refreshAllAvatars();
+    }
+}
+
+// Force refresh all avatars (emergency function)
+function refreshAllAvatars() {
+    const avatarImages = document.querySelectorAll('.avatar-img');
+    avatarImages.forEach(img => {
+        if (!img.classList.contains('loaded')) {
+            img.classList.remove('error');
+            img.src = '/static/images/profile_icon.jpg?refresh=' + Date.now();
+        }
+    });
+}
+
+// Start periodic health checks
+setInterval(checkAvatarHealth, 5000); // Check every 5 seconds
 
 // Escape HTML for security
 function escapeHtml(text) {
@@ -674,15 +1091,23 @@ function addMessageToChat(message) {
     const messageHtml = createMessageHTML(message);
     chatMessages.insertAdjacentHTML('beforeend', messageHtml);
     
-    // Apply colors to new avatars
-    applyUserColors();
+    // Automatically initialize avatars in the new message
+    setTimeout(() => {
+        const newMessage = document.querySelector(`[data-message-id="${message.id}"]`);
+        if (newMessage) {
+            const avatars = newMessage.querySelectorAll('.avatar-img');
+            avatars.forEach(avatar => {
+                initializeAvatar(avatar);
+            });
+        }
+    }, 10);
 }
 
 // Create message HTML
 function createMessageHTML(message) {
     const currentUser = "{{ session.user }}";
     const isCurrentUser = message.user === currentUser;
-    const avatar = createUserAvatar(message.user, isCurrentUser);
+    const avatar = createUserAvatar(message.user, message.profile_picture, isCurrentUser);
     
     let replyHtml = '';
     if (message.reply_to) {
@@ -811,15 +1236,7 @@ function createMessageHTML(message) {
             
             <div class="message-content">
                 <div class="message-avatar">
-                    ${isAdmin ? `
-                        <div class="avatar admin-avatar">
-                            <i class="fas fa-crown"></i>
-                        </div>
-                    ` : `
-                        <div class="avatar user-avatar">
-                            ${message.user.charAt(0).toUpperCase()}
-                        </div>
-                    `}
+                    ${createUserAvatar(message.user, message.profile_picture, isCurrentUser)}
                 </div>
                 
                 <div class="message-body">
@@ -1013,6 +1430,49 @@ function deleteMessage(messageId) {
     });
 }
 
+// Remove message from chat
+function removeMessageFromChat(messageId) {
+    const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+    if (messageElement) {
+        messageElement.remove();
+    }
+}
+
+// Update message in chat (for edits)
+function updateMessageInChat(messageId, newMessage) {
+    const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+    if (messageElement) {
+        const messageText = messageElement.querySelector(`#message-text-${messageId}`);
+        if (messageText) {
+            messageText.innerHTML = escapeHtml(newMessage.text).replace(/\n/g, '<br>');
+        }
+        
+        // Add edited indicator if not already present
+        const messageHeader = messageElement.querySelector('.message-header');
+        if (messageHeader && !messageHeader.querySelector('.edited-indicator')) {
+            const editedIndicator = document.createElement('span');
+            editedIndicator.className = 'edited-indicator';
+            editedIndicator.textContent = '(edited)';
+            messageHeader.appendChild(editedIndicator);
+        }
+    }
+}
+
+
+
+
+
+// Initialize page functionality
+function initializePage() {
+    // Initialize existing avatars
+    const existingAvatars = document.querySelectorAll('.avatar-img');
+    existingAvatars.forEach(avatar => {
+        initializeAvatar(avatar);
+    });
+    
+    console.log('Chat page initialized');
+}
+
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize page
@@ -1020,6 +1480,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Set up event listeners
     setupEventListeners();
+    
+    // Set up avatar observer for real-time loading
+    setupAvatarObserver();
+    
+    // Preload profile image
+    preloadProfileImage();
     
     // Auto-scroll to bottom
     setTimeout(scrollToBottom, 100);
@@ -1203,5 +1669,195 @@ function setupEventListeners() {
         }
     });
 }
+
+// Members list functionality
+let membersVisible = false;
+
+// Toggle members list modal
+function toggleMembersList() {
+    const modal = document.getElementById('members-modal');
+    const membersBtn = document.querySelector('.members-btn');
+    
+    if (membersVisible) {
+        modal.style.display = 'none';
+        membersVisible = false;
+        membersBtn.style.background = 'transparent';
+        membersBtn.style.borderColor = '#4f545c';
+    } else {
+        modal.style.display = 'block';
+        membersVisible = true;
+        membersBtn.style.background = '#5865f2';
+        membersBtn.style.borderColor = '#5865f2';
+        membersBtn.style.color = 'white';
+        loadMembersList();
+    }
+}
+
+// Load and display members list
+function loadMembersList() {
+    const membersList = document.getElementById('members-list');
+    
+    // Show loading state
+    membersList.innerHTML = `
+        <div class="loading-members">
+            <i class="fas fa-spinner fa-spin"></i>
+            <span>Loading members...</span>
+        </div>
+    `;
+    
+    // Fetch members from server
+    fetch('/get_members')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayMembers(data.members);
+                updateMemberCounts(data.members.length);
+            } else {
+                membersList.innerHTML = `
+                    <div class="no-members">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Failed to load members</p>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading members:', error);
+            membersList.innerHTML = `
+                <div class="no-members">
+                    <i class="fas fa-wifi"></i>
+                    <p>Connection error</p>
+                </div>
+            `;
+        });
+}
+
+// Display members in the list
+function displayMembers(members) {
+    const membersList = document.getElementById('members-list');
+    
+    if (members.length === 0) {
+        membersList.innerHTML = `
+            <div class="no-members">
+                <i class="fas fa-users"></i>
+                <p>No members online</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Sort members (admin first, then alphabetically)
+    members.sort((a, b) => {
+        if (a.is_admin && !b.is_admin) return -1;
+        if (!a.is_admin && b.is_admin) return 1;
+        return a.username.localeCompare(b.username);
+    });
+    
+    const membersHtml = members.map(member => {
+        const avatarHtml = member.is_admin ? 
+            `<div class="member-avatar admin">
+                <i class="fas fa-crown"></i>
+            </div>` :
+            `<div class="member-avatar">
+                <img src="${member.profile_picture || '/static/images/profile_icon.jpg'}" alt="Profile">
+            </div>`;
+        
+        return `
+            <div class="member-item" onclick="mentionUser('${member.username}')">
+                ${avatarHtml}
+                <div class="member-info">
+                    <div class="member-name ${member.is_admin ? 'admin' : ''}">
+                        ${escapeHtml(member.username)}
+                        ${member.is_admin ? '<span class="member-badge">ADMIN</span>' : ''}
+                    </div>
+                    <div class="member-status">
+                        ${member.is_admin ? 'Administrator' : 'Member'}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    membersList.innerHTML = membersHtml;
+}
+
+// Update member counts in UI
+function updateMemberCounts(count) {
+    const onlineCount = document.getElementById('online-count');
+    const memberCount = document.getElementById('member-count');
+    
+    if (onlineCount) {
+        onlineCount.textContent = count;
+    }
+    
+    if (memberCount) {
+        memberCount.textContent = count;
+    }
+}
+
+// Mention a user (add @username to input)
+function mentionUser(username) {
+    const input = document.getElementById('message-input');
+    if (input) {
+        const currentText = input.value;
+        const mention = `@${username} `;
+        
+        // Add mention at the end or replace selection
+        if (currentText.trim() === '') {
+            input.value = mention;
+        } else {
+            input.value = currentText + ' ' + mention;
+        }
+        
+        input.focus();
+        // Move cursor to end
+        input.setSelectionRange(input.value.length, input.value.length);
+    }
+    
+    // Close members modal
+    toggleMembersList();
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', function(e) {
+    const modal = document.getElementById('members-modal');
+    const modalContent = document.querySelector('.members-modal-content');
+    const membersBtn = document.querySelector('.members-btn');
+    
+    if (membersVisible && !modalContent.contains(e.target) && !membersBtn.contains(e.target)) {
+        toggleMembersList();
+    }
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && membersVisible) {
+        toggleMembersList();
+    }
+});
+
+// Periodically refresh members list when visible
+setInterval(() => {
+    if (membersVisible) {
+        loadMembersList();
+    }
+}, 30000); // Refresh every 30 seconds
+
+// Load initial member count
+setTimeout(() => {
+    if (!membersVisible) {
+        fetch('/get_members')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateMemberCounts(data.members.length);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading initial member count:', error);
+            });
+    }
+}, 1000);
+
 </script>
 {% endblock %}

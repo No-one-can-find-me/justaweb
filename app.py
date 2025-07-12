@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, send_from_directory
 from datetime import datetime, timedelta
 import os
 import json
@@ -18,6 +18,9 @@ ADMIN_USERS = ['huntsmangg']
 
 # Rate limiting: Store last message time per user
 user_last_message = {}
+
+# Track active users (in real app, you'd use Redis or a database)
+active_users = {}
 
 def load_users():
     """Load users from users.txt file"""
@@ -42,16 +45,65 @@ def save_users(users):
         # In production, you'd want to log this properly
 
 def load_messages():
-    """Load messages from chats.txt file"""
+    """Load messages from chats.txt file and enhance with profile picture info"""
     try:
         if os.path.exists(COMMENTS_FILE):
             with open(COMMENTS_FILE, 'r', encoding='utf-8') as f:
                 content = f.read().strip()
                 if content:
-                    return json.loads(content)
+                    messages = json.loads(content)
+                    # Enhance messages with profile picture information
+                    for message in messages:
+                        message['profile_picture'] = get_user_profile_picture(message.get('user', ''))
+                    return messages
         return []
     except (json.JSONDecodeError, FileNotFoundError):
         return []
+
+def get_user_profile_picture(username):
+    """Get profile picture path for a user"""
+    if username == 'huntsmangg':
+        return None  # Admin uses crown icon
+    else:
+        # Check if profile image exists
+        profile_path = 'static/images/profile_icon.jpg'
+        if os.path.exists(profile_path):
+            return '/static/images/profile_icon.jpg'
+        else:
+            # Fallback to a default placeholder if image doesn't exist
+            return None
+
+def update_user_activity(username):
+    """Update user's last activity time"""
+    active_users[username] = {
+        'last_seen': datetime.now(),
+        'is_admin': username in ADMIN_USERS,
+        'profile_picture': get_user_profile_picture(username)
+    }
+
+def get_active_members():
+    """Get list of currently active members (active in last 5 minutes)"""
+    cutoff_time = datetime.now() - timedelta(minutes=5)
+    active_members = []
+    
+    # Clean up old entries and collect active users
+    users_to_remove = []
+    for username, data in active_users.items():
+        if data['last_seen'] > cutoff_time:
+            active_members.append({
+                'username': username,
+                'is_admin': data['is_admin'],
+                'profile_picture': data['profile_picture'],
+                'last_seen': data['last_seen'].strftime('%Y-%m-%d %H:%M:%S')
+            })
+        else:
+            users_to_remove.append(username)
+    
+    # Remove inactive users
+    for username in users_to_remove:
+        del active_users[username]
+    
+    return active_members
 
 def save_messages(messages):
     """Save messages to chats.txt file"""
@@ -150,6 +202,9 @@ def chat():
         flash('Please login to access chat!', 'error')
         return redirect(url_for('login'))
     
+    # Update user activity when accessing chat
+    update_user_activity(session['user'])
+    
     messages = load_messages()
     return render_template('chat.html', messages=messages)
 
@@ -192,7 +247,8 @@ def send_message():
         'text': message_text,
         'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         'edited': False,
-        'reply_to': reply_to
+        'reply_to': reply_to,
+        'profile_picture': get_user_profile_picture(session['user'])
     }
     
     messages.append(message)
@@ -226,6 +282,9 @@ def edit_message(message_id):
             message['text'] = new_text
             message['edited'] = True
             message['edit_timestamp'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            # Ensure profile picture is set
+            if 'profile_picture' not in message:
+                message['profile_picture'] = get_user_profile_picture(message['user'])
             save_messages(messages)
             return jsonify({'success': True, 'message': message})
     
@@ -257,6 +316,9 @@ def get_messages():
 def get_new_messages():
     if 'user' not in session:
         return jsonify({'success': False, 'error': 'Not logged in'}), 401
+    
+    # Update user activity on each poll
+    update_user_activity(session['user'])
     
     since_id = request.args.get('since', 0, type=int)
     messages = load_messages()
@@ -291,6 +353,32 @@ def logout():
             del user_last_message[user]
         flash('You have been logged out!', 'info')
     return redirect(url_for('home'))
+
+@app.route('/get_members')
+def get_members():
+    """Get list of active members"""
+    if 'user' not in session:
+        return jsonify({'success': False, 'error': 'Not logged in'}), 401
+    
+    # Update current user's activity
+    update_user_activity(session['user'])
+    
+    # Get active members
+    members = get_active_members()
+    
+    return jsonify({
+        'success': True,
+        'members': members
+    })
+
+@app.route('/static/images/profile_icon.jpg')
+def serve_profile_image():
+    """Serve profile image with proper caching headers"""
+    response = send_from_directory('static/images', 'profile_icon.jpg')
+    # Set cache headers for better performance
+    response.headers['Cache-Control'] = 'public, max-age=86400'  # Cache for 24 hours
+    response.headers['ETag'] = 'profile-icon-v1'
+    return response
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))
