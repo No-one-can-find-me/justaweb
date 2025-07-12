@@ -14,7 +14,7 @@
             <div class="profile-content">
                 <div class="profile-info">
                     <div class="profile-avatar">
-                        <i class="fas fa-user-circle"></i>
+                        <img src="{{ url_for('static', filename='images/profile_icon.jpg') }}" alt="Profile" class="profile-avatar-img">
                     </div>
                     <div class="profile-details">
                         <h2 class="profile-username">{{ session.user }}</h2>

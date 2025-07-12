@@ -29,7 +29,9 @@
                 
                 <div class="message-content">
                     <div class="message-avatar">
-                        {% if message.user == 'huntsmangg' %}
+                        {% if message.user == session.user %}
+                            <img src="{{ url_for('static', filename='images/profile_icon.jpg') }}" alt="Profile" class="avatar-img">
+                        {% elif message.user == 'huntsmangg' %}
                             <div class="avatar admin-avatar">
                                 <i class="fas fa-crown"></i>
                             </div>
@@ -205,20 +207,20 @@
 }
 
 .message-avatar {
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
     flex-shrink: 0;
 }
 
 .avatar {
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 600;
-    font-size: 16px;
+    font-size: 18px;
     cursor: pointer;
 }
 
@@ -230,6 +232,16 @@
 .admin-avatar {
     background: linear-gradient(135deg, #ffd700, #ffed4e);
     color: #2f3136;
+}
+
+.avatar-img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #5865f2;
+    box-shadow: 0 0 8px rgba(88, 101, 242, 0.3);
+    transition: transform 0.2s ease;
 }
 
 .message-body {
@@ -442,14 +454,19 @@
     }
     
     .message-avatar {
-        width: 32px;
-        height: 32px;
+        width: 42px;
+        height: 42px;
     }
     
     .avatar {
-        width: 32px;
-        height: 32px;
-        font-size: 14px;
+        width: 42px;
+        height: 42px;
+        font-size: 16px;
+    }
+    
+    .avatar-img {
+        width: 42px;
+        height: 42px;
     }
     
     .message-header {

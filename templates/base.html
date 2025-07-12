@@ -28,7 +28,7 @@
                         {% if session.user %}
                             <div class="profile-dropdown">
                                 <button class="nav-link login-logo-btn" id="profileDropdownBtn" title="Profile Menu">
-                                    <i class="fas fa-user-circle"></i>
+                                    <img src="{{ url_for('static', filename='images/profile_icon.jpg') }}" alt="Profile" class="profile-icon-img">
                                 </button>
                                <div class="dropdown-menu" id="profileDropdownMenu">
                                     <a href="{{ url_for('profile') }}" class="dropdown-item">
