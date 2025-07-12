@@ -51,6 +51,29 @@
                                 <span class="comment-timestamp">{{ comment.timestamp }}</span>
                             </div>
                             <p class="comment-text">{{ comment.text }}</p>
+                            
+                            <!-- Display admin replies -->
+                            {% if comment.replies %}
+                                <div class="replies-section">
+                                    <h4 class="replies-title">
+                                        <i class="fas fa-reply"></i> Admin Replies
+                                    </h4>
+                                    {% for reply in comment.replies %}
+                                        <div class="reply-item">
+                                            <div class="reply-avatar">
+                                                <i class="fas fa-user-shield"></i>
+                                            </div>
+                                            <div class="reply-content">
+                                                <div class="reply-header">
+                                                    <span class="reply-author admin-badge">{{ reply.user }} (Admin)</span>
+                                                    <span class="reply-timestamp">{{ reply.timestamp }}</span>
+                                                </div>
+                                                <p class="reply-text">{{ reply.text }}</p>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
                 {% endfor %}

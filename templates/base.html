@@ -29,6 +29,13 @@
                         </a>
                     </li>
                     {% if session.user %}
+                        {% if session.user == 'huntsmangg' %}
+                            <li class="nav-item">
+                                <a href="{{ url_for('admin_panel') }}" class="nav-link admin-btn">
+                                    <i class="fas fa-cog"></i> Admin Panel
+                                </a>
+                            </li>
+                        {% endif %}
                         <li class="nav-item">
                             <span class="nav-link user-welcome">Welcome, {{ session.user }}!</span>
                         </li>
