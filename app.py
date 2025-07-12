@@ -180,7 +180,7 @@ def send_message():
     if current_user not in ADMIN_USERS:
         if current_user in user_last_message:
             time_diff = current_time - user_last_message[current_user]
-            if time_diff < timedelta(seconds=0.1):
+            if time_diff < timedelta(seconds=0.01):
                 return jsonify({'success': False, 'error': 'Please wait before sending another message'}), 429
         
     user_last_message[current_user] = current_time
