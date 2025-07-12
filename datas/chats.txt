@@ -1,1 +1,9 @@
-[]
+[
+  {
+    "id": 1,
+    "user": "testuser123",
+    "text": "This is a test comment to verify file storage!",
+    "timestamp": "2025-07-12 15:47:57",
+    "replies": []
+  }
+]

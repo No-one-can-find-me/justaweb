@@ -1,3 +1,4 @@
 {
-  "huntsmangg": "1976Abcd?"
+  "huntsmangg": "1976Abcd?",
+  "testuser123": "password123"
 }
