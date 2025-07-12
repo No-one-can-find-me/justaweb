@@ -491,6 +491,7 @@ body::before {
     .social-btn {
         padding: 0.8rem 1.5rem;
         font-size: 1rem;
+        min-width: 120px;
     }
     
     .primary-buttons, .secondary-buttons {
@@ -502,38 +503,39 @@ body::before {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 1rem 2rem;
-    border-radius: 8px;
+    padding: 1rem 2.5rem;
+    border-radius: 50px;
     text-decoration: none;
     font-weight: 600;
     font-size: 1.1rem;
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
-    border: 2px solid transparent;
+    border: 3px solid;
+    background: #000000;
+    color: white;
+    min-width: 140px;
+    justify-content: center;
 }
 
 .youtube-btn {
-    background: linear-gradient(135deg, #ff0000, #ff6600);
-    color: white;
+    border-color: #ff0000;
 }
 
 .kick-btn {
-    background: linear-gradient(135deg, #00ff00, #00ffaa);
-    color: black;
-    margin-left: -4rem;
+    border-color: #00ff00;
+    margin-left: -2.5rem;
 }
 
 .discord-btn {
-    background: linear-gradient(135deg, #5865f2, #738adb);
-    color: white;
+    border-color: #5865f2;
     margin-left: -0.5rem;
 }
 
 .chat-btn {
-    background: linear-gradient(135deg, #4a9eff, #8a4fff);
-    color: white;
-    margin-left: 5rem;
+    border-color: #4a9eff;
+    margin-top: 0.5rem;
+    margin-left: 1rem;
 }
 
 .social-btn:hover {
