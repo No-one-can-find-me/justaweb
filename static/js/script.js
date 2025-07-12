@@ -179,6 +179,32 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // Profile dropdown functionality
+    const profileDropdownBtn = document.getElementById('profileDropdownBtn');
+    const profileDropdownMenu = document.getElementById('profileDropdownMenu');
+    
+    if (profileDropdownBtn && profileDropdownMenu) {
+        profileDropdownBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            profileDropdownMenu.classList.toggle('show');
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!profileDropdownBtn.contains(e.target) && !profileDropdownMenu.contains(e.target)) {
+                profileDropdownMenu.classList.remove('show');
+            }
+        });
+        
+        // Close dropdown on escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                profileDropdownMenu.classList.remove('show');
+            }
+        });
+    }
+
     // Console welcome message
     console.log(`
     ██╗  ██╗██╗   ██╗███╗   ██╗████████╗███████╗███╗   ███╗ █████╗ ███╗   ██╗

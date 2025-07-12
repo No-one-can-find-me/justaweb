@@ -180,7 +180,7 @@ def send_message():
     if current_user not in ADMIN_USERS:
         if current_user in user_last_message:
             time_diff = current_time - user_last_message[current_user]
-            if time_diff < timedelta(seconds=0.01):
+            if time_diff < timedelta(seconds=0.001):
                 return jsonify({'success': False, 'error': 'Please wait before sending another message'}), 429
         
     user_last_message[current_user] = current_time
@@ -272,6 +272,14 @@ def get_new_messages():
         'messages': new_messages,
         'current_message_ids': current_message_ids
     })
+
+@app.route('/profile')
+def profile():
+    if 'user' not in session:
+        flash('Please login to access your profile!', 'error')
+        return redirect(url_for('login'))
+    
+    return render_template('profile.html')
 
 @app.route('/logout')
 def logout():

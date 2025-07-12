@@ -7,18 +7,33 @@
         <p class="hero-subtitle">Your Ultimate Gaming Destination</p>
         
         <div class="social-buttons">
-            <a href="https://www.youtube.com/@HuntsmanGG" target="_blank" class="social-btn youtube-btn">
-                <i class="fab fa-youtube"></i>
-                <span>YouTube</span>
-            </a>
-            <a href="https://kick.com/huntsman-gg" target="_blank" class="social-btn kick-btn">
-                <i class="fas fa-play"></i>
-                <span>Kick</span>
-            </a>
-            <a href="https://discord.com/invite/jUxs5gN4bB" target="_blank" class="social-btn discord-btn">
-                <i class="fab fa-discord"></i>
-                <span>Discord</span>
-            </a>
+            <div class="primary-buttons">
+                <a href="https://www.youtube.com/@HuntsmanGG" target="_blank" class="social-btn youtube-btn">
+                    <i class="fab fa-youtube"></i>
+                    <span>YouTube</span>
+                </a>
+                {% if session.user %}
+                    <a href="{{ url_for('chat') }}" class="social-btn chat-btn">
+                        <i class="fas fa-comments"></i>
+                        <span>Lets Chat</span>
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="social-btn chat-btn">
+                        <i class="fas fa-comments"></i>
+                        <span>Lets Chat</span>
+                    </a>
+                {% endif %}
+            </div>
+            <div class="secondary-buttons">
+                <a href="https://kick.com/huntsman-gg" target="_blank" class="social-btn kick-btn">
+                    <i class="fas fa-play"></i>
+                    <span>Kick</span>
+                </a>
+                <a href="https://discord.com/invite/jUxs5gN4bB" target="_blank" class="social-btn discord-btn">
+                    <i class="fab fa-discord"></i>
+                    <span>Discord</span>
+                </a>
+            </div>
         </div>
     </div>
 </section>
