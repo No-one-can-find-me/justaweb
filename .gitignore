@@ -102,3 +102,19 @@ venv.bak/
 .mypy_cache/
 .dmypy.json
 dmypy.json
+
+# Application specific
+datas/users.txt
+datas/chats.txt
+*.secret
+.secret_key
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

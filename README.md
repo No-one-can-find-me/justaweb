@@ -1,13 +1,13 @@
 # Huntsman Space - Gaming Website
 
-A professional dark-themed gaming website built with Flask, featuring a modern UI perfect for gamers.
+A professional dark-themed gaming website built with Flask, featuring a Discord-like chat system and modern UI perfect for gamers.
 
 ## Features
 
 - **Dark Professional Gaming Theme**: Custom CSS with neon accents and smooth animations
 - **Responsive Design**: Works perfectly on desktop and mobile devices
-- **User Authentication**: Login/Register system with session management
-- **Comment System**: Interactive community comments with real-time posting
+- **User Authentication**: Secure login/register system with enhanced validation
+- **Discord-like Chat System**: Real-time messaging with edit, delete, and reply features
 - **Social Media Integration**: Links to YouTube, Kick, and Discord
 - **Video Integration**: Embedded YouTube video in the About section
 - **Flash Messages**: Beautiful notification system for user feedback
@@ -15,10 +15,10 @@ A professional dark-themed gaming website built with Flask, featuring a modern U
 
 ## Pages
 
-1. **Home Page**: Welcome message, social buttons, about section with video, and recent comments
+1. **Home Page**: Welcome message, social buttons, about section with video, and chat preview
 2. **Login Page**: User authentication with beautiful form design
-3. **Register Page**: New user registration with validation
-4. **Comments Page**: Full comment system with posting and viewing capabilities
+3. **Register Page**: New user registration with enhanced validation
+4. **Chat Page**: Discord-style chat system with real-time messaging
 
 ## Installation
 
@@ -38,7 +38,7 @@ pip install -r requirements.txt
 python app.py
 ```
 
-4. Open your browser and navigate to `http://localhost:5000`
+4. Open your browser and navigate to `http://localhost:8080`
 
 ## Railway Deployment
 
@@ -97,9 +97,11 @@ The main styles are in `static/css/style.css`. You can customize:
 
 ### Security
 - Session-based authentication
-- Password confirmation validation
-- CSRF protection with Flask's built-in features
-- Input validation and sanitization
+- Enhanced password and username validation  
+- XSS protection with message sanitization
+- Input validation and error handling
+- JSON request validation
+- Message length limits (2000 characters)
 
 ## Technology Stack
 

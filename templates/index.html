@@ -45,36 +45,35 @@
     </div>
 </section>
 
-<section class="quick-comments-section">
+<section class="quick-chat-section">
     <div class="container">
-        <h2 class="section-title">Latest Comments</h2>
-        <div class="quick-comments">
-            {% if comments %}
-                {% for comment in comments[-3:] %}
-                    <div class="comment-card">
-                        <div class="comment-header">
-                            <span class="comment-author">
-                                <i class="fas fa-user-circle"></i>
-                                {{ comment.user }}
-                            </span>
-                            <span class="comment-time">{{ comment.timestamp }}</span>
-                        </div>
-                        <p class="comment-text">{{ comment.text }}</p>
-                    </div>
-                {% endfor %}
-            {% else %}
-                <div class="no-comments-card">
-                    <i class="fas fa-comment-slash"></i>
-                    <h3>No Comments Yet</h3>
-                    <p>Be the first to start the conversation!</p>
+        <h2 class="section-title">Join the Conversation</h2>
+        <div class="chat-preview">
+            <div class="chat-promo-card">
+                <div class="chat-icon">
+                    <i class="fas fa-comments"></i>
                 </div>
-            {% endif %}
+                <h3>Real-time Chat</h3>
+                <p>Connect with the community in our Discord-like chat system!</p>
+                <ul class="chat-features">
+                    <li><i class="fas fa-check"></i> Send and edit messages</li>
+                    <li><i class="fas fa-check"></i> Reply to conversations</li>
+                    <li><i class="fas fa-check"></i> Real-time interactions</li>
+                </ul>
+            </div>
         </div>
-        <div class="comment-cta">
-            <a href="{{ url_for('comments_page') }}" class="cta-btn">
-                <i class="fas fa-comments"></i>
-                View All Comments
-            </a>
+        <div class="chat-cta">
+            {% if session.user %}
+                <a href="{{ url_for('chat') }}" class="cta-btn">
+                    <i class="fas fa-comments"></i>
+                    Enter Chat Room
+                </a>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="cta-btn">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Login to Chat
+                </a>
+            {% endif %}
         </div>
     </div>
 </section>

@@ -1,9 +1,10 @@
 [
   {
     "id": 1,
-    "user": "testuser123",
-    "text": "This is a test comment to verify file storage!",
-    "timestamp": "2025-07-12 15:47:57",
-    "replies": []
+    "user": "huntsmangg",
+    "text": "Welcome to Huntsman Space Chat! 🚀\nThis is our new Discord-like chat system. You can send messages, edit them, reply to others, and more!",
+    "timestamp": "2025-07-12 16:30:00",
+    "edited": false,
+    "reply_to": null
   }
 ]

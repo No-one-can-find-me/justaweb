@@ -1,10 +1,13 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
-from datetime import datetime
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
+from datetime import datetime, timedelta
 import os
 import json
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-here')
+
+# Session configuration
+app.permanent_session_lifetime = timedelta(hours=24)  # Session expires after 24 hours
 
 # File paths for data storage
 USERS_FILE = 'datas/users.txt'
@@ -12,6 +15,9 @@ COMMENTS_FILE = 'datas/chats.txt'
 
 # Admin users
 ADMIN_USERS = ['huntsmangg']
+
+# Rate limiting: Store last message time per user
+user_last_message = {}
 
 def load_users():
     """Load users from users.txt file"""
@@ -27,12 +33,16 @@ def load_users():
 
 def save_users(users):
     """Save users to users.txt file"""
-    os.makedirs(os.path.dirname(USERS_FILE), exist_ok=True)
-    with open(USERS_FILE, 'w', encoding='utf-8') as f:
-        json.dump(users, f, indent=2, ensure_ascii=False)
+    try:
+        os.makedirs(os.path.dirname(USERS_FILE), exist_ok=True)
+        with open(USERS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(users, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        print(f"Error saving users: {e}")
+        # In production, you'd want to log this properly
 
-def load_comments():
-    """Load comments from chats.txt file"""
+def load_messages():
+    """Load messages from chats.txt file"""
     try:
         if os.path.exists(COMMENTS_FILE):
             with open(COMMENTS_FILE, 'r', encoding='utf-8') as f:
@@ -43,18 +53,22 @@ def load_comments():
     except (json.JSONDecodeError, FileNotFoundError):
         return []
 
-def save_comments(comments):
-    """Save comments to chats.txt file"""
-    os.makedirs(os.path.dirname(COMMENTS_FILE), exist_ok=True)
-    with open(COMMENTS_FILE, 'w', encoding='utf-8') as f:
-        json.dump(comments, f, indent=2, ensure_ascii=False)
+def save_messages(messages):
+    """Save messages to chats.txt file"""
+    try:
+        os.makedirs(os.path.dirname(COMMENTS_FILE), exist_ok=True)
+        with open(COMMENTS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(messages, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        print(f"Error saving messages: {e}")
+        # In production, you'd want to log this properly
 
-def get_next_comment_id():
-    """Get the next available comment ID"""
-    comments = load_comments()
-    if not comments:
+def get_next_message_id():
+    """Get the next available message ID"""
+    messages = load_messages()
+    if not messages:
         return 1
-    return max(comment.get('id', 0) for comment in comments) + 1
+    return max(msg.get('id', 0) for msg in messages) + 1
 
 # Initialize with admin user if users.txt is empty
 def initialize_admin_user():
@@ -69,18 +83,30 @@ initialize_admin_user()
 
 @app.route('/')
 def home():
-    comments = load_comments()
-    return render_template('index.html', comments=comments)
+    return render_template('index.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form['username']
+        username = request.form['username'].strip()
         password = request.form['password']
         
+        # Basic input validation
+        if not username or not password:
+            flash('Please enter both username and password!', 'error')
+            return render_template('login.html')
+        
         users = load_users()
-        if username in users and users[username] == password:
-            session['user'] = username
+        # Case-insensitive username check for login
+        user_found = None
+        for stored_user in users:
+            if stored_user.lower() == username.lower():
+                user_found = stored_user
+                break
+        
+        if user_found and users[user_found] == password:
+            session.permanent = True  # Make session permanent (uses permanent_session_lifetime)
+            session['user'] = user_found  # Use the exact stored username
             flash('Login successful!', 'success')
             return redirect(url_for('home'))
         else:
@@ -91,97 +117,151 @@ def login():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        username = request.form['username']
+        username = request.form['username'].strip()
         password = request.form['password']
         confirm_password = request.form['confirm_password']
         
-        users = load_users()
-        if username in users:
-            flash('Username already exists!', 'error')
+        # Enhanced validation
+        if not username or len(username) < 3:
+            flash('Username must be at least 3 characters long!', 'error')
+        elif len(username) > 20:
+            flash('Username must be 20 characters or less!', 'error')
+        elif not username.isalnum():
+            flash('Username can only contain letters and numbers!', 'error')
+        elif not password or len(password) < 6:
+            flash('Password must be at least 6 characters long!', 'error')
         elif password != confirm_password:
             flash('Passwords do not match!', 'error')
-        elif len(password) < 6:
-            flash('Password must be at least 6 characters long!', 'error')
         else:
-            users[username] = password
-            save_users(users)
-            flash('Registration successful! Please login.', 'success')
-            return redirect(url_for('login'))
+            users = load_users()
+            if username.lower() in [u.lower() for u in users.keys()]:
+                flash('Username already exists!', 'error')
+            else:
+                users[username] = password
+                save_users(users)
+                flash('Registration successful! Please login.', 'success')
+                return redirect(url_for('login'))
     
     return render_template('register.html')
 
-@app.route('/comments', methods=['GET', 'POST'])
-def comments_page():
-    if request.method == 'POST':
-        if 'user' not in session:
-            flash('Please login to post comments!', 'error')
-            return redirect(url_for('login'))
+@app.route('/chat')
+def chat():
+    if 'user' not in session:
+        flash('Please login to access chat!', 'error')
+        return redirect(url_for('login'))
+    
+    messages = load_messages()
+    return render_template('chat.html', messages=messages)
+
+@app.route('/send_message', methods=['POST'])
+def send_message():
+    if 'user' not in session:
+        return jsonify({'success': False, 'error': 'Not logged in'}), 401
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'error': 'Invalid JSON data'}), 400
         
-        comment_text = request.form['comment']
-        if comment_text.strip():
-            comments = load_comments()
-            comment = {
-                'id': get_next_comment_id(),
-                'user': session['user'],
-                'text': comment_text,
-                'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                'replies': []
-            }
-            comments.append(comment)
-            save_comments(comments)
-            flash('Comment posted successfully!', 'success')
+        message_text = data.get('message', '').strip()
+        reply_to = data.get('reply_to')
+    except Exception as e:
+        return jsonify({'success': False, 'error': 'Invalid request format'}), 400
     
-    comments = load_comments()
-    return render_template('comments.html', comments=comments)
+    if not message_text:
+        return jsonify({'success': False, 'error': 'Message cannot be empty'}), 400
+    
+    if len(message_text) > 2000:
+        return jsonify({'success': False, 'error': 'Message too long (max 2000 characters)'}), 400
+    
+    # Rate limiting: Prevent spam (1 message per 2 seconds, except admins)
+    current_user = session['user']
+    current_time = datetime.now()
+    if current_user not in ADMIN_USERS:
+        if current_user in user_last_message:
+            time_diff = current_time - user_last_message[current_user]
+            if time_diff < timedelta(seconds=2):
+                return jsonify({'success': False, 'error': 'Please wait before sending another message'}), 429
+        
+    user_last_message[current_user] = current_time
+    
+    messages = load_messages()
+    message = {
+        'id': get_next_message_id(),
+        'user': session['user'],
+        'text': message_text,
+        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'edited': False,
+        'reply_to': reply_to
+    }
+    
+    messages.append(message)
+    save_messages(messages)
+    
+    return jsonify({'success': True, 'message': message})
 
-@app.route('/admin')
-def admin_panel():
+@app.route('/edit_message/<int:message_id>', methods=['POST'])
+def edit_message(message_id):
     if 'user' not in session:
-        flash('Please login to access admin panel!', 'error')
-        return redirect(url_for('login'))
+        return jsonify({'success': False, 'error': 'Not logged in'}), 401
     
-    if session['user'] not in ADMIN_USERS:
-        flash('Access denied! Admin privileges required.', 'error')
-        return redirect(url_for('home'))
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'error': 'Invalid JSON data'}), 400
+        
+        new_text = data.get('message', '').strip()
+    except Exception as e:
+        return jsonify({'success': False, 'error': 'Invalid request format'}), 400
     
-    comments = load_comments()
-    return render_template('admin.html', comments=comments)
+    if not new_text:
+        return jsonify({'success': False, 'error': 'Message cannot be empty'}), 400
+    
+    if len(new_text) > 2000:
+        return jsonify({'success': False, 'error': 'Message too long (max 2000 characters)'}), 400
+    
+    messages = load_messages()
+    for message in messages:
+        if message['id'] == message_id and message['user'] == session['user']:
+            message['text'] = new_text
+            message['edited'] = True
+            message['edit_timestamp'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            save_messages(messages)
+            return jsonify({'success': True, 'message': message})
+    
+    return jsonify({'success': False, 'error': 'Message not found or unauthorized'}), 404
 
-@app.route('/admin/reply/<int:comment_id>', methods=['POST'])
-def admin_reply(comment_id):
+@app.route('/delete_message/<int:message_id>', methods=['DELETE'])
+def delete_message(message_id):
     if 'user' not in session:
-        flash('Please login to reply!', 'error')
-        return redirect(url_for('login'))
+        return jsonify({'success': False, 'error': 'Not logged in'}), 401
     
-    if session['user'] not in ADMIN_USERS:
-        flash('Access denied! Admin privileges required.', 'error')
-        return redirect(url_for('home'))
+    messages = load_messages()
+    for i, message in enumerate(messages):
+        if message['id'] == message_id and (message['user'] == session['user'] or session['user'] in ADMIN_USERS):
+            del messages[i]
+            save_messages(messages)
+            return jsonify({'success': True})
     
-    reply_text = request.form['reply']
-    if reply_text.strip():
-        comments = load_comments()
-        # Find the comment to reply to
-        for comment in comments:
-            if comment['id'] == comment_id:
-                reply = {
-                    'id': len([r for c in comments for r in c['replies']]) + 1,
-                    'user': session['user'],
-                    'text': reply_text,
-                    'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                }
-                comment['replies'].append(reply)
-                save_comments(comments)
-                flash('Reply posted successfully!', 'success')
-                break
-        else:
-            flash('Comment not found!', 'error')
+    return jsonify({'success': False, 'error': 'Message not found or unauthorized'}), 404
+
+@app.route('/get_messages')
+def get_messages():
+    if 'user' not in session:
+        return jsonify({'success': False, 'error': 'Not logged in'}), 401
     
-    return redirect(url_for('admin_panel'))
+    messages = load_messages()
+    return jsonify({'success': True, 'messages': messages})
 
 @app.route('/logout')
 def logout():
-    session.pop('user', None)
-    flash('You have been logged out!', 'info')
+    if 'user' in session:
+        user = session['user']
+        session.clear()  # Clear all session data
+        # Clean up rate limiting data for logged out user
+        if user in user_last_message:
+            del user_last_message[user]
+        flash('You have been logged out!', 'info')
     return redirect(url_for('home'))
 
 if __name__ == '__main__':
