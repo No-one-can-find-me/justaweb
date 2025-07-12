@@ -1,5 +1,6 @@
 {
   "huntsmangg": "1976Abcd?",
   "testuser123": "password123",
-  "shadowub": "1976abcd"
+  "shadowub": "1976abcd",
+  "hunt": "1976abcd?"
 }

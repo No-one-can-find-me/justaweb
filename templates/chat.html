@@ -29,14 +29,14 @@
                 
                 <div class="message-content">
                     <div class="message-avatar">
-                        {% if message.user == session.user %}
-                            <img src="{{ url_for('static', filename='images/profile_icon.jpg') }}" alt="Profile" class="avatar-img">
-                        {% elif message.user == 'huntsmangg' %}
+                        {% if message.user == 'huntsmangg' %}
                             <div class="avatar admin-avatar">
                                 <i class="fas fa-crown"></i>
                             </div>
+                        {% elif message.user == session.user %}
+                            <img src="{{ url_for('static', filename='images/profile_icon.jpg') }}" alt="Profile" class="avatar-img">
                         {% else %}
-                            <div class="avatar user-avatar">
+                            <div class="avatar user-avatar" data-username="{{ message.user }}">
                                 {{ message.user[0].upper() }}
                             </div>
                         {% endif %}
@@ -113,7 +113,7 @@
 .chat-container {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 80px);
+    height: calc(100vh - 60px);
     background: #36393f;
     color: #dcddde;
     margin: 0;
@@ -123,12 +123,13 @@
 
 .chat-header {
     background: #2f3136;
-    padding: 12px 16px;
+    padding: 8px 16px;
     border-bottom: 1px solid #202225;
     display: flex;
     justify-content: space-between;
     align-items: center;
     box-shadow: 0 1px 0 rgba(4,4,5,0.2);
+    margin-top: -14px;
 }
 
 .channel-info {
@@ -227,6 +228,13 @@
 .user-avatar {
     background: #5865f2;
     color: white;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s ease;
+}
+
+.user-avatar:hover {
+    transform: scale(1.05);
 }
 
 .admin-avatar {
@@ -434,11 +442,12 @@
 /* Mobile responsiveness */
 @media (max-width: 768px) {
     .chat-container {
-        height: calc(100vh - 60px);
+        height: calc(100vh - 50px);
     }
     
     .chat-header {
-        padding: 8px 12px;
+        padding: 6px 12px;
+        margin-top: -8px;
     }
     
     .channel-name {
@@ -517,12 +526,115 @@
 <script>
 let replyingTo = null;
 
+// Generate unique colors for user avatars
+function generateUserColor(username) {
+    let hash = 0;
+    for (let i = 0; i < username.length; i++) {
+        hash = username.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    
+    // Generate a nice color palette
+    const colors = [
+        '#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6',
+        '#1abc9c', '#34495e', '#e67e22', '#95a5a6', '#8e44ad',
+        '#16a085', '#27ae60', '#2980b9', '#c0392b', '#d35400',
+        '#7f8c8d', '#f1c40f', '#e91e63', '#673ab7', '#ff5722'
+    ];
+    
+    return colors[Math.abs(hash) % colors.length];
+}
+
+// Apply unique colors to user avatars
+function applyUserColors() {
+    const avatars = document.querySelectorAll('.user-avatar[data-username]');
+    avatars.forEach(avatar => {
+        const username = avatar.getAttribute('data-username');
+        if (username) {
+            const color = generateUserColor(username);
+            avatar.style.background = color;
+        }
+    });
+}
+
+// Generate user avatar with initials or profile picture
+function createUserAvatar(username, isCurrentUser = false) {
+    if (username === 'huntsmangg') {
+        return `<div class="avatar admin-avatar"><i class="fas fa-crown"></i></div>`;
+    } else if (isCurrentUser) {
+        return `<img src="/static/images/profile_icon.jpg" alt="Profile" class="avatar-img">`;
+    } else {
+        const color = generateUserColor(username);
+        return `<div class="avatar user-avatar" data-username="${username}" style="background: ${color};">${username[0].toUpperCase()}</div>`;
+    }
+}
+
 // Auto-scroll to bottom
 function scrollToBottom() {
     const messagesContainer = document.getElementById('chat-messages');
     if (messagesContainer) {
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
+}
+
+// Initialize page
+function initializePage() {
+    applyUserColors();
+    scrollToBottom();
+}
+
+// Escape HTML for security
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+}
+
+// Setup event listeners
+function setupEventListeners() {
+    // Input field
+    const messageInput = document.getElementById('message-input');
+    if (messageInput) {
+        messageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    }
+    
+    // Send button
+    const sendBtn = document.getElementById('send-btn');
+    if (sendBtn) {
+        sendBtn.addEventListener('click', sendMessage);
+    }
+    
+    // Scroll position check
+    const messagesContainer = document.getElementById('chat-messages');
+    if (messagesContainer) {
+        messagesContainer.addEventListener('scroll', checkScrollPosition);
+    }
+    
+    // Delegate click events for dynamic buttons
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.reply-btn')) {
+            const btn = e.target.closest('.reply-btn');
+            const messageId = btn.getAttribute('data-message-id');
+            const username = btn.getAttribute('data-username');
+            replyToMessage(messageId, username);
+        } else if (e.target.closest('.edit-btn')) {
+            const btn = e.target.closest('.edit-btn');
+            const messageId = btn.getAttribute('data-message-id');
+            editMessage(messageId);
+        } else if (e.target.closest('.delete-btn')) {
+            const btn = e.target.closest('.delete-btn');
+            const messageId = btn.getAttribute('data-message-id');
+            deleteMessage(messageId);
+        }
+    });
 }
 
 // Show error message
@@ -561,6 +673,97 @@ function addMessageToChat(message) {
     
     const messageHtml = createMessageHTML(message);
     chatMessages.insertAdjacentHTML('beforeend', messageHtml);
+    
+    // Apply colors to new avatars
+    applyUserColors();
+}
+
+// Create message HTML
+function createMessageHTML(message) {
+    const currentUser = "{{ session.user }}";
+    const isCurrentUser = message.user === currentUser;
+    const avatar = createUserAvatar(message.user, isCurrentUser);
+    
+    let replyHtml = '';
+    if (message.reply_to) {
+        replyHtml = `
+            <div class="reply-reference">
+                <i class="fas fa-reply"></i>
+                <span>Replying to message</span>
+            </div>
+        `;
+    }
+    
+    let adminBadge = '';
+    let usernameClass = '';
+    if (message.user === 'huntsmangg') {
+        adminBadge = '<span class="admin-badge">ADMIN</span>';
+        usernameClass = 'admin-username';
+    }
+    
+    let editedIndicator = '';
+    if (message.edited) {
+        editedIndicator = '<span class="edited-indicator">(edited)</span>';
+    }
+    
+    let actionButtons = '';
+    if (isCurrentUser || currentUser === 'huntsmangg') {
+        actionButtons = `
+            <button class="action-btn reply-btn" data-message-id="${message.id}" data-username="${message.user}">
+                <i class="fas fa-reply"></i>
+            </button>
+        `;
+        
+        if (isCurrentUser) {
+            actionButtons += `
+                <button class="action-btn edit-btn" data-message-id="${message.id}">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="action-btn delete-btn" data-message-id="${message.id}">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+        } else if (currentUser === 'huntsmangg') {
+            actionButtons += `
+                <button class="action-btn delete-btn" data-message-id="${message.id}">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+        }
+    } else {
+        actionButtons = `
+            <button class="action-btn reply-btn" data-message-id="${message.id}" data-username="${message.user}">
+                <i class="fas fa-reply"></i>
+            </button>
+        `;
+    }
+    
+    return `
+        <div class="message-item" data-message-id="${message.id}">
+            ${replyHtml}
+            <div class="message-content">
+                <div class="message-avatar">
+                    ${avatar}
+                </div>
+                <div class="message-body">
+                    <div class="message-header">
+                        <span class="username ${usernameClass}">
+                            ${escapeHtml(message.user)}
+                            ${adminBadge}
+                        </span>
+                        <span class="timestamp">${message.timestamp}</span>
+                        ${editedIndicator}
+                    </div>
+                    <div class="message-text" id="message-text-${message.id}">
+                        ${escapeHtml(message.text).replace(/\n/g, '<br>')}
+                    </div>
+                    <div class="message-actions">
+                        ${actionButtons}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 // Update existing message
@@ -812,6 +1015,9 @@ function deleteMessage(messageId) {
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize page
+    initializePage();
+    
     // Set up event listeners
     setupEventListeners();
     

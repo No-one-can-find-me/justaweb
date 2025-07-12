@@ -59,6 +59,12 @@ body::before {
     top: 0;
     z-index: 1000;
     padding: 1rem 0;
+    transition: padding 0.3s ease;
+}
+
+/* Smaller header for chat page */
+.chat-page .navbar {
+    padding: 0.5rem 0;
 }
 
 .nav-container {
@@ -68,6 +74,17 @@ body::before {
     justify-content: space-between;
     align-items: center;
     padding: 0 2rem;
+    transition: padding 0.3s ease;
+}
+
+/* Smaller nav container padding for chat page */
+.chat-page .nav-container {
+    padding: 0 1.5rem;
+}
+
+/* Hide footer on chat page */
+.chat-page .footer {
+    display: none;
 }
 
 .brand-link {
@@ -89,6 +106,12 @@ body::before {
     background-clip: text;
     text-shadow: 0 0 20px rgba(74, 158, 255, 0.3);
     margin: 0;
+    transition: font-size 0.3s ease;
+}
+
+/* Smaller brand name for chat page */
+.chat-page .brand-name {
+    font-size: 1.4rem;
 }
 
 .nav-list {
@@ -141,6 +164,14 @@ body::before {
     width: 58px;
     height: 58px;
     font-size: 1.2rem;
+    transition: width 0.3s ease, height 0.3s ease, padding 0.3s ease;
+}
+
+/* Smaller login button for chat page */
+.chat-page .login-logo-btn {
+    width: 46px;
+    height: 46px;
+    padding: 0.3rem;
 }
 
 .login-logo-btn:hover {
@@ -158,7 +189,14 @@ body::before {
     object-fit: cover;
     border: 4px solid var(--neon-blue);
     box-shadow: 0 0 12px rgba(74, 158, 255, 0.4);
-    transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, width 0.3s ease, height 0.3s ease, border-width 0.3s ease;
+}
+
+/* Smaller profile icon for chat page */
+.chat-page .profile-icon-img {
+    width: 38px;
+    height: 38px;
+    border: 3px solid var(--neon-blue);
 }
 
 .login-logo-btn:hover .profile-icon-img {
