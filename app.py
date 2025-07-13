@@ -466,36 +466,6 @@ def serve_profile_image():
     response.headers['ETag'] = 'profile-icon-v2'
     return response
 
-@app.route('/circular-favicon.svg')
-def circular_favicon():
-    """Serve circular favicon as SVG"""
-    # Get the absolute URL for the profile image
-    profile_image_url = url_for('static', filename='images/profile_icon.jpg', _external=True)
-    
-    # Create SVG with circular clipping
-    svg_content = f'''<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="100" height="100" viewBox="0 0 100 100">
-  <defs>
-    <clipPath id="circleClip">
-      <circle cx="50" cy="50" r="50"/>
-    </clipPath>
-  </defs>
-  <image width="100" height="100" clip-path="url(#circleClip)" xlink:href="{profile_image_url}" />
-</svg>'''
-    
-    response = app.response_class(
-        response=svg_content,
-        status=200,
-        mimetype='image/svg+xml'
-    )
-    response.headers['Cache-Control'] = 'public, max-age=604800'  # Cache for 7 days
-    return response
-
-@app.route('/favicon.ico')
-def favicon():
-    """Redirect to profile image for traditional favicon support"""
-    return redirect(url_for('static', filename='images/profile_icon.jpg'))
-
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))
     # Disable debug mode in production
