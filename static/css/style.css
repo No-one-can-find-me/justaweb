@@ -1359,6 +1359,20 @@ body.chat-page::before {
     text-align: center;
 }
 
+/* Brand logo styles */
+.brand-logo {
+    height: 32px;
+    width: auto;
+    margin-right: 10px;
+    vertical-align: middle;
+}
+
+.brand-link {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+}
+
 /* Mobile navigation adjustments for chat and profile */
 @media (max-width: 768px) {
     .navbar {

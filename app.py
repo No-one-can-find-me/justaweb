@@ -466,6 +466,25 @@ def serve_profile_image():
     response.headers['ETag'] = 'profile-icon-v2'
     return response
 
+@app.route('/static/images/website_logo.png')
+def serve_website_logo():
+    """Serve website logo with proper caching headers"""
+    # If the file doesn't exist yet, serve the profile icon as a fallback
+    try:
+        response = send_from_directory('static/images', 'website_logo.png')
+    except:
+        response = send_from_directory('static/images', 'profile_icon.jpg')
+    
+    # Set cache headers for better performance
+    response.headers['Cache-Control'] = 'public, max-age=604800'  # Cache for 7 days
+    response.headers['ETag'] = 'website-logo-v1'
+    return response
+
+@app.route('/favicon.ico')
+def favicon():
+    """Serve favicon.ico"""
+    return redirect(url_for('static', filename='images/website_logo.png'))
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))
     # Disable debug mode in production
