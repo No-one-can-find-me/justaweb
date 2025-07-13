@@ -65,13 +65,9 @@ def get_user_profile_picture(username):
     if username == 'huntsmangg':
         return None  # Admin uses crown icon
     else:
-        # Check if profile image exists
-        profile_path = 'static/images/profile_icon.jpg'
-        if os.path.exists(profile_path):
-            return '/static/images/profile_icon.jpg'
-        else:
-            # Fallback to a default placeholder if image doesn't exist
-            return None
+        # For now, return None to use CSS-generated avatars
+        # In the future, you can implement actual profile picture uploads
+        return None
 
 def update_user_activity(username):
     """Update user's last activity time"""

@@ -1029,12 +1029,7 @@ function createMessageHTML(message) {
 
 // Message manipulation functions removed
 
-// Escape HTML to prevent XSS
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
+// HTML escaping handled by comprehensive function below
 
 // Send message
 function sendMessage() {
