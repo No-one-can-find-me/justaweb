@@ -43,6 +43,29 @@ def save_users(users):
     except Exception as e:
         print(f"Error saving users: {e}")
         # In production, you'd want to log this properly
+        
+def get_user_data(username):
+    """Get user data including profile information"""
+    users = load_users()
+    
+    # If username exists in users dict
+    if username in users:
+        # If it's a string, it's the old format with just password
+        if isinstance(users[username], str):
+            # Convert to new format
+            password = users[username]
+            users[username] = {
+                'password': password,
+                'display_name': None,
+                'bio': None,
+                'joined_date': datetime.now().strftime('%Y-%m-%d')
+            }
+            save_users(users)
+        
+        # Return user data
+        return users[username]
+    
+    return None
 
 def load_messages():
     """Load messages from chats.txt file and enhance with profile picture info"""
@@ -123,7 +146,22 @@ def initialize_admin_user():
     """Initialize admin user if not exists"""
     users = load_users()
     if 'huntsmangg' not in users:
-        users['huntsmangg'] = '1976Abcd?'
+        users['huntsmangg'] = {
+            'password': '1976Abcd?',
+            'display_name': 'Huntsman',
+            'bio': 'Admin and creator of Huntsman Space',
+            'joined_date': datetime.now().strftime('%Y-%m-%d')
+        }
+        save_users(users)
+    elif isinstance(users['huntsmangg'], str):
+        # Convert old format to new format
+        password = users['huntsmangg']
+        users['huntsmangg'] = {
+            'password': password,
+            'display_name': 'Huntsman',
+            'bio': 'Admin and creator of Huntsman Space',
+            'joined_date': datetime.now().strftime('%Y-%m-%d')
+        }
         save_users(users)
 
 # Initialize admin user on startup
@@ -152,11 +190,18 @@ def login():
                 user_found = stored_user
                 break
         
-        if user_found and users[user_found] == password:
-            session.permanent = True  # Make session permanent (uses permanent_session_lifetime)
-            session['user'] = user_found  # Use the exact stored username
-            flash('Login successful!', 'success')
-            return redirect(url_for('home'))
+        if user_found:
+            # Check if user data is in the new format or old format
+            if isinstance(users[user_found], dict):
+                stored_password = users[user_found]['password']
+            else:
+                stored_password = users[user_found]
+                
+            if stored_password == password:
+                session.permanent = True  # Make session permanent (uses permanent_session_lifetime)
+                session['user'] = user_found  # Use the exact stored username
+                flash('Login successful!', 'success')
+                return redirect(url_for('home'))
         else:
             flash('Invalid username or password!', 'error')
     
@@ -185,7 +230,13 @@ def register():
             if username.lower() in [u.lower() for u in users.keys()]:
                 flash('Username already exists!', 'error')
             else:
-                users[username] = password
+                # Store user with new format including profile data
+                users[username] = {
+                    'password': password,
+                    'display_name': None,
+                    'bio': None,
+                    'joined_date': datetime.now().strftime('%Y-%m-%d')
+                }
                 save_users(users)
                 flash('Registration successful! Please login.', 'success')
                 return redirect(url_for('login'))
@@ -290,7 +341,93 @@ def profile():
         flash('Please login to access your profile!', 'error')
         return redirect(url_for('login'))
     
-    return render_template('profile.html')
+    # Get user data including profile information
+    user_data = get_user_data(session['user'])
+    if not user_data:
+        # This should not happen, but just in case
+        flash('User data not found!', 'error')
+        return redirect(url_for('logout'))
+    
+    return render_template('profile.html', user_data=user_data)
+
+@app.route('/update_profile', methods=['POST'])
+def update_profile():
+    if 'user' not in session:
+        flash('Please login to update your profile!', 'error')
+        return redirect(url_for('login'))
+    
+    # Get form data
+    display_name = request.form.get('display_name', '').strip()
+    new_username = request.form.get('username', '').strip()
+    bio = request.form.get('bio', '').strip()
+    
+    # Validate input
+    if len(display_name) > 30:
+        flash('Display name must be 30 characters or less!', 'error')
+        return redirect(url_for('profile'))
+    
+    if len(bio) > 200:
+        flash('Bio must be 200 characters or less!', 'error')
+        return redirect(url_for('profile'))
+    
+    # Load users data
+    users = load_users()
+    current_username = session['user']
+    
+    # Check if username exists and is different from current
+    if new_username != current_username:
+        # Validate new username
+        if not new_username or len(new_username) < 3:
+            flash('Username must be at least 3 characters long!', 'error')
+            return redirect(url_for('profile'))
+        elif len(new_username) > 20:
+            flash('Username must be 20 characters or less!', 'error')
+            return redirect(url_for('profile'))
+        elif not new_username.isalnum():
+            flash('Username can only contain letters and numbers!', 'error')
+            return redirect(url_for('profile'))
+        
+        # Check if new username already exists
+        if new_username.lower() in [u.lower() for u in users.keys() if u != current_username]:
+            flash('Username already exists!', 'error')
+            return redirect(url_for('profile'))
+        
+        # Get current user data
+        user_data = users[current_username]
+        
+        # Remove old username entry and add new one
+        del users[current_username]
+        users[new_username] = user_data
+        
+        # Update session
+        session['user'] = new_username
+        flash('Username updated successfully! You have been logged in with your new username.', 'success')
+    else:
+        # Ensure user data is in the new format
+        if isinstance(users[current_username], str):
+            password = users[current_username]
+            users[current_username] = {
+                'password': password,
+                'display_name': None,
+                'bio': None,
+                'joined_date': datetime.now().strftime('%Y-%m-%d')
+            }
+        
+        # Update display name and bio
+        if 'display_name' not in users[current_username]:
+            users[current_username]['display_name'] = None
+        if 'bio' not in users[current_username]:
+            users[current_username]['bio'] = None
+        
+        users[current_username]['display_name'] = display_name if display_name else None
+        users[current_username]['bio'] = bio if bio else None
+        
+        flash('Profile updated successfully!', 'success')
+    
+    # Save updated users data
+    save_users(users)
+    
+    return redirect(url_for('profile'))
 
 @app.route('/logout')
 def logout():

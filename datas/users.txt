@@ -1,6 +1,16 @@
 {
-  "huntsmangg": "1976Abcd?",
+  "huntsmangg": {
+    "password": "1976Abcd?",
+    "display_name": "Huntsman",
+    "bio": "Admin and creator of Huntsman Space",
+    "joined_date": "2025-07-14"
+  },
   "testuser123": "password123",
-  "shadowub": "1976abcd",
+  "shadowub": {
+    "password": "1976abcd",
+    "display_name": "Shadow",
+    "bio": "i am shadow",
+    "joined_date": "2025-07-14"
+  },
   "hunt": "1976abcd?"
 }
