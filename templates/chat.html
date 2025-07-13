@@ -4,81 +4,141 @@
 
 {% block content %}
 <script>document.body.classList.add('chat-page');</script>
-<div class="chat-container">
-    <div class="chat-header">
-        <div class="channel-info">
-            <i class="fas fa-hashtag"></i>
-            <span class="channel-name">general</span>
-            <span class="channel-description">Welcome to Huntsman Space chat</span>
-        </div>
-        <div class="header-actions">
-            <div class="online-count">
-                <i class="fas fa-users"></i>
-                <span>Online</span>
-                <span class="online-number" id="online-count">0</span>
+<div class="discord-layout">
+    <!-- Left sidebar with channels and DMs -->
+    <div class="server-sidebar">
+        <div class="sidebar-section">
+            <div class="section-header">
+                <span>CHANNELS</span>
             </div>
-            <button class="members-btn" onclick="toggleMembersList()" title="Show Members">
-                <i class="fas fa-address-book"></i>
-                <span>Members</span>
-            </button>
+            <div class="channel-list">
+                <div class="channel-item active" data-channel="general" onclick="switchChannel('general')">
+                    <i class="fas fa-hashtag"></i>
+                    <span>general</span>
+                </div>
+                <div class="channel-item" data-channel="anime" onclick="switchChannel('anime')">
+                    <i class="fas fa-hashtag"></i>
+                    <span>anime</span>
+                </div>
+                <div class="channel-item" data-channel="wuthering-waves" onclick="switchChannel('wuthering-waves')">
+                    <i class="fas fa-hashtag"></i>
+                    <span>wuthering-waves</span>
+                </div>
+                <div class="channel-item" data-channel="clips-and-memes" onclick="switchChannel('clips-and-memes')">
+                    <i class="fas fa-hashtag"></i>
+                    <span>clips-and-memes</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="sidebar-section">
+            <div class="section-header">
+                <span>DIRECT MESSAGES</span>
+                <button class="add-dm-btn" onclick="showNewDMModal()">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+            <div class="dm-list" id="dm-list">
+                <!-- DM list will be populated dynamically -->
+                <div class="empty-dm-message">
+                    <i class="fas fa-user-friends"></i>
+                    <span>No friends yet</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="user-area">
+            <div class="current-user" onclick="showCurrentUserProfile()">
+                <div class="user-avatar">
+                    <div class="avatar user-avatar">
+                        {{ session.user[0].upper() }}
+                    </div>
+                </div>
+                <div class="user-info">
+                    <div class="user-name">{{ session.user }}</div>
+                    <div class="user-status">Online</div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="chat-messages" id="chat-messages">
-        {% for message in messages %}
-            <div class="message-item" data-message-id="{{ message.id }}">
-                
-                <div class="message-content">
-                    <div class="message-avatar">
-                        {% if message.user == 'huntsmangg' %}
-                            <div class="avatar admin-avatar">
-                                <i class="fas fa-crown"></i>
-                            </div>
-                        {% else %}
-                            <div class="avatar user-avatar">
-                                {{ message.user[0].upper() }}
-                            </div>
-                        {% endif %}
-                    </div>
+    <!-- Main chat area -->
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="channel-info">
+                <i class="fas fa-hashtag"></i>
+                <span class="channel-name" id="current-channel-name">general</span>
+                <span class="channel-description" id="channel-description">Welcome to Huntsman Space chat</span>
+            </div>
+            <div class="header-actions">
+                <div class="online-count">
+                    <i class="fas fa-users"></i>
+                    <span>Online</span>
+                    <span class="online-number" id="online-count">0</span>
+                </div>
+                <button class="members-btn" onclick="toggleMembersList()" title="Show Members">
+                    <i class="fas fa-address-book"></i>
+                    <span>Members</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="chat-messages" id="chat-messages">
+            {% for message in messages %}
+                <div class="message-item" data-message-id="{{ message.id }}" data-channel="{{ message.channel|default('general') }}">
                     
-                    <div class="message-body">
-                        <div class="message-header">
-                            <span class="username {% if message.user == 'huntsmangg' %}admin-username{% endif %}">
-                                {{ message.user }}
-                                {% if message.user == 'huntsmangg' %}
-                                    <span class="admin-badge">ADMIN</span>
-                                {% endif %}
-                            </span>
-                            <span class="timestamp">{{ message.timestamp }}</span>
-                            {% if message.edited %}
-                                <span class="edited-indicator">(edited)</span>
+                    <div class="message-content">
+                        <div class="message-avatar" onclick="showUserProfile('{{ message.user }}')">
+                            {% if message.user == 'huntsmangg' %}
+                                <div class="avatar admin-avatar">
+                                    <i class="fas fa-crown"></i>
+                                </div>
+                            {% else %}
+                                <div class="avatar user-avatar">
+                                    {{ message.user[0].upper() }}
+                                </div>
                             {% endif %}
                         </div>
                         
-                        <div class="message-text" id="message-text-{{ message.id }}">
-                            {{ message.text|e|replace('\n', '<br>')|safe }}
-                        </div>
-                        
-                        <div class="message-actions">
-                            <!-- Buttons removed -->
+                        <div class="message-body">
+                            <div class="message-header">
+                                <span class="username {% if message.user == 'huntsmangg' %}admin-username{% endif %}" onclick="showUserProfile('{{ message.user }}')">
+                                    {{ message.user }}
+                                    {% if message.user == 'huntsmangg' %}
+                                        <span class="admin-badge">ADMIN</span>
+                                    {% endif %}
+                                </span>
+                                <span class="timestamp">{{ message.timestamp }}</span>
+                                {% if message.edited %}
+                                    <span class="edited-indicator">(edited)</span>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="message-text" id="message-text-{{ message.id }}">
+                                {{ message.text|e|replace('\n', '<br>')|safe }}
+                            </div>
+                            
+                            <div class="message-actions">
+                                <!-- Buttons removed -->
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        {% endfor %}
-    </div>
+            {% endfor %}
+        </div>
 
-    <div class="chat-input-container">        
-        <div class="chat-input-area">
-            <div class="input-wrapper">
-                <input type="text" 
-                       id="message-input" 
-                       placeholder="Message #general" 
-                       maxlength="2000"
-                       autocomplete="off">
-                <button id="send-btn" onclick="sendMessage()">
-                    <i class="fas fa-paper-plane"></i>
-                </button>
+        <div class="chat-input-container">        
+            <div class="chat-input-area">
+                <div class="input-wrapper">
+                    <input type="text" 
+                           id="message-input" 
+                           placeholder="Message #general" 
+                           maxlength="2000"
+                           autocomplete="off">
+                    <button id="send-btn" onclick="sendMessage()">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -106,16 +166,212 @@
     </div>
 </div>
 
+<!-- User Profile Modal -->
+<div class="user-profile-modal" id="user-profile-modal">
+    <div class="user-profile-content">
+        <div class="profile-header">
+            <h3>User Profile</h3>
+            <button class="close-profile" onclick="closeUserProfile()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="profile-body">
+            <div class="profile-avatar">
+                <div class="avatar large-avatar" id="profile-avatar-placeholder">
+                    <!-- Will be filled dynamically -->
+                </div>
+            </div>
+            <div class="profile-info">
+                <div class="profile-username" id="profile-username">Username</div>
+                <div class="profile-display-name" id="profile-display-name">Display Name</div>
+                <div class="profile-bio" id="profile-bio">Bio information will appear here...</div>
+                <div class="profile-joined" id="profile-joined">Joined: Unknown</div>
+            </div>
+            <div class="profile-actions">
+                <button class="friend-request-btn" id="friend-request-btn" onclick="sendFriendRequest()">
+                    <i class="fas fa-user-plus"></i>
+                    Add Friend
+                </button>
+                <button class="send-dm-btn" id="send-dm-btn" onclick="startDirectMessage()">
+                    <i class="fas fa-comment"></i>
+                    Message
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New DM Modal -->
+<div class="new-dm-modal" id="new-dm-modal">
+    <div class="new-dm-content">
+        <div class="new-dm-header">
+            <h3>New Direct Message</h3>
+            <button class="close-new-dm" onclick="closeNewDMModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="new-dm-body">
+            <div class="dm-search">
+                <input type="text" id="dm-search-input" placeholder="Search for a user..." autocomplete="off">
+                <i class="fas fa-search"></i>
+            </div>
+            <div class="dm-search-results" id="dm-search-results">
+                <!-- Will be populated dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
+.discord-layout {
+    display: flex;
+    height: calc(100vh - 60px);
+    background: #36393f;
+    color: #dcddde;
+    margin: -13px;
+    max-width: none;
+    padding: 0;
+}
+
+.server-sidebar {
+    width: 240px;
+    background: #2f3136;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #202225;
+    flex-shrink: 0;
+    overflow-y: auto;
+}
+
+.sidebar-section {
+    margin-bottom: 16px;
+    flex: 1;
+}
+
+.section-header {
+    padding: 16px 8px 4px 16px;
+    color: #8e9297;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.add-dm-btn {
+    background: transparent;
+    border: none;
+    color: #8e9297;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+.add-dm-btn:hover {
+    color: #dcddde;
+}
+
+.channel-list, .dm-list {
+    padding: 0 8px;
+}
+
+.channel-item, .dm-item {
+    display: flex;
+    align-items: center;
+    padding: 6px 8px;
+    border-radius: 4px;
+    color: #8e9297;
+    cursor: pointer;
+    margin-bottom: 2px;
+    font-size: 14px;
+}
+
+.channel-item:hover, .dm-item:hover {
+    background: #36393f;
+    color: #dcddde;
+}
+
+.channel-item.active, .dm-item.active {
+    background: #393c43;
+    color: #ffffff;
+}
+
+.channel-item i, .dm-item i {
+    margin-right: 6px;
+    font-size: 16px;
+}
+
+.empty-dm-message {
+    padding: 16px;
+    text-align: center;
+    color: #8e9297;
+    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.empty-dm-message i {
+    font-size: 24px;
+    opacity: 0.7;
+}
+
+.user-area {
+    margin-top: auto;
+    padding: 8px;
+    background: #292b2f;
+    border-top: 1px solid #202225;
+}
+
+.current-user {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.current-user:hover {
+    background: #36393f;
+}
+
+.user-avatar {
+    margin-right: 8px;
+}
+
+.user-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.user-name {
+    color: #ffffff;
+    font-weight: 500;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-status {
+    color: #b9bbbe;
+    font-size: 12px;
+}
+
 .chat-container {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 60px);
+    flex: 1;
     background: #36393f;
     color: #dcddde;
     margin: 0;
     max-width: none;
     padding: 0;
+    overflow: hidden;
 }
 
 .chat-header {
@@ -613,15 +869,324 @@
     color: #72767d;
 }
 
+/* User Profile Modal */
+.user-profile-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    backdrop-filter: blur(3px);
+}
+
+.user-profile-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #36393f;
+    border-radius: 8px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    width: 400px;
+    max-width: 90%;
+    border: 1px solid #202225;
+    overflow: hidden;
+}
+
+.profile-header {
+    background: #2f3136;
+    padding: 16px 20px;
+    border-bottom: 1px solid #202225;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.profile-header h3 {
+    margin: 0;
+    color: #ffffff;
+    font-size: 16px;
+}
+
+.close-profile {
+    background: transparent;
+    border: none;
+    color: #b9bbbe;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.close-profile:hover {
+    background: #ed4245;
+    color: white;
+}
+
+.profile-body {
+    padding: 20px;
+}
+
+.profile-avatar {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.large-avatar {
+    width: 80px;
+    height: 80px;
+    font-size: 32px;
+}
+
+.profile-info {
+    margin-bottom: 20px;
+}
+
+.profile-username {
+    font-size: 20px;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 4px;
+}
+
+.profile-display-name {
+    font-size: 16px;
+    color: #b9bbbe;
+    margin-bottom: 12px;
+}
+
+.profile-bio {
+    background: #2f3136;
+    padding: 12px;
+    border-radius: 4px;
+    color: #dcddde;
+    margin-bottom: 12px;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.profile-joined {
+    font-size: 12px;
+    color: #8e9297;
+}
+
+.profile-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.friend-request-btn, .send-dm-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: background 0.2s ease;
+}
+
+.friend-request-btn {
+    background: #5865f2;
+    color: white;
+    border: none;
+}
+
+.friend-request-btn:hover {
+    background: #4752c4;
+}
+
+.send-dm-btn {
+    background: #4f545c;
+    color: white;
+    border: none;
+}
+
+.send-dm-btn:hover {
+    background: #5d6269;
+}
+
+/* New DM Modal */
+.new-dm-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    backdrop-filter: blur(3px);
+}
+
+.new-dm-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #36393f;
+    border-radius: 8px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    width: 400px;
+    max-width: 90%;
+    border: 1px solid #202225;
+    overflow: hidden;
+}
+
+.new-dm-header {
+    background: #2f3136;
+    padding: 16px 20px;
+    border-bottom: 1px solid #202225;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.new-dm-header h3 {
+    margin: 0;
+    color: #ffffff;
+    font-size: 16px;
+}
+
+.close-new-dm {
+    background: transparent;
+    border: none;
+    color: #b9bbbe;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.close-new-dm:hover {
+    background: #ed4245;
+    color: white;
+}
+
+.new-dm-body {
+    padding: 20px;
+}
+
+.dm-search {
+    position: relative;
+    margin-bottom: 16px;
+}
+
+.dm-search input {
+    width: 100%;
+    padding: 10px 36px 10px 12px;
+    background: #202225;
+    border: 1px solid #40444b;
+    border-radius: 4px;
+    color: #dcddde;
+    font-size: 14px;
+    outline: none;
+}
+
+.dm-search input:focus {
+    border-color: #5865f2;
+}
+
+.dm-search i {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #8e9297;
+}
+
+.dm-search-results {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.dm-user-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.dm-user-item:hover {
+    background: #32353b;
+}
+
+.dm-user-avatar {
+    margin-right: 12px;
+}
+
+.dm-user-info {
+    flex: 1;
+}
+
+.dm-user-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #ffffff;
+}
+
+.dm-user-status {
+    font-size: 12px;
+    color: #b9bbbe;
+}
+
+/* Member list styling */
+.member-group-header {
+    padding: 16px 20px 8px;
+    color: #72767d;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    border-bottom: 1px solid #40444b;
+    margin-bottom: 8px;
+}
+
+.offline-member {
+    opacity: 0.6;
+}
+
+.offline-text {
+    color: #72767d;
+}
+
+.member-avatar.offline {
+    background: #72767d;
+    opacity: 0.7;
+}
+
 /* Mobile responsiveness */
 @media (max-width: 768px) {
-    .chat-container {
+    .discord-layout {
+        flex-direction: column;
         height: calc(100vh - 50px);
+    }
+    
+    .server-sidebar {
+        width: 100%;
+        height: auto;
+        max-height: 40vh;
+        border-right: none;
+        border-bottom: 1px solid #202225;
+        overflow-y: auto;
+    }
+    
+    .chat-container {
+        height: 60vh;
     }
     
     .chat-header {
         padding: 6px 12px;
-        margin-top: -8px;
+        margin-top: 0;
     }
     
     .channel-name {
@@ -636,7 +1201,9 @@
         display: none;
     }
     
-    .members-modal-content {
+    .members-modal-content, 
+    .user-profile-content,
+    .new-dm-content {
         width: 90%;
         max-width: 350px;
     }
@@ -691,6 +1258,50 @@
     #message-input {
         font-size: 16px; /* Prevents zoom on iOS */
     }
+    
+    /* Mobile sidebar toggle */
+    .sidebar-toggle {
+        display: block;
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #5865f2;
+        color: white;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        z-index: 100;
+        border: none;
+    }
+    
+    .sidebar-toggle:active {
+        transform: scale(0.95);
+    }
+    
+    /* Mobile channel list */
+    .channel-list, .dm-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 8px;
+    }
+    
+    .channel-item, .dm-item {
+        flex: 0 0 auto;
+        padding: 6px 12px;
+        border-radius: 16px;
+        background: #36393f;
+        margin-bottom: 0;
+    }
+    
+    .channel-item.active, .dm-item.active {
+        background: #5865f2;
+    }
 }
 
 
@@ -704,6 +1315,31 @@
         transform: translateX(-50%) translateY(0);
         opacity: 1;
     }
+}
+
+/* Member list styling */
+.member-group-header {
+    padding: 16px 20px 8px;
+    color: #72767d;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    border-bottom: 1px solid #40444b;
+    margin-bottom: 8px;
+}
+
+.offline-member {
+    opacity: 0.6;
+}
+
+.offline-text {
+    color: #72767d;
+}
+
+.member-avatar.offline {
+    background: #72767d;
+    opacity: 0.7;
 }
 </style>
 
@@ -1004,16 +1640,24 @@ function createMessageHTML(message) {
     let actionButtons = '';
     // All buttons removed
     
+    // Get current channel or use the message's channel if available
+    const channel = message.channel || 'general';
+    
+    // Check if this message should be visible in the current channel
+    const currentChannel = document.querySelector('.channel-item.active');
+    const currentChannelId = currentChannel ? currentChannel.dataset.channel : 'general';
+    const isVisible = channel === currentChannelId ? '' : 'style="display: none;"';
+    
     return `
-        <div class="message-item" data-message-id="${message.id}">
+        <div class="message-item" data-message-id="${message.id}" data-channel="${channel}" ${isVisible}>
             ${replyHtml}
             <div class="message-content">
-                <div class="message-avatar">
+                <div class="message-avatar" onclick="showUserProfile('${escapeHtml(message.user)}')">
                     ${avatar}
                 </div>
                 <div class="message-body">
                     <div class="message-header">
-                        <span class="username ${usernameClass}">
+                        <span class="username ${usernameClass}" onclick="showUserProfile('${escapeHtml(message.user)}')">
                             ${escapeHtml(message.user)}
                             ${adminBadge}
                         </span>
@@ -1053,6 +1697,10 @@ function sendMessage() {
         return;
     }
     
+    // Get current channel
+    const currentChannel = document.querySelector('.channel-item.active');
+    const channelId = currentChannel ? currentChannel.dataset.channel : 'general';
+    
     // Disable send button and show sending state
     const sendBtn = document.getElementById('send-btn');
     if (sendBtn) {
@@ -1061,7 +1709,8 @@ function sendMessage() {
     }
     
     const data = {
-        message: message
+        message: message,
+        channel: channelId
     };
     
     fetch('/send_message', {
@@ -1124,6 +1773,280 @@ function initializePage() {
     console.log('Chat page initialized');
 }
 
+// Channel switching
+function switchChannel(channelId) {
+    // Update active channel in UI
+    const channelItems = document.querySelectorAll('.channel-item');
+    channelItems.forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    const selectedChannel = document.querySelector(`.channel-item[data-channel="${channelId}"]`);
+    if (selectedChannel) {
+        selectedChannel.classList.add('active');
+    }
+    
+    // Update channel name in header
+    const channelNameElement = document.getElementById('current-channel-name');
+    if (channelNameElement) {
+        channelNameElement.textContent = channelId;
+    }
+    
+    // Update channel description
+    const channelDescriptionElement = document.getElementById('channel-description');
+    if (channelDescriptionElement) {
+        // Get channel descriptions from server-provided data
+        const channelDescriptions = {
+            'general': '{{ channel_descriptions.get("general", "Welcome to Huntsman Space chat") }}',
+            'anime': '{{ channel_descriptions.get("anime", "Discuss your favorite anime series and characters") }}',
+            'wuthering-waves': '{{ channel_descriptions.get("wuthering-waves", "Talk about Wuthering Waves gameplay and strategies") }}',
+            'clips-and-memes': '{{ channel_descriptions.get("clips-and-memes", "Share your favorite gaming clips and memes") }}'
+        };
+        
+        channelDescriptionElement.textContent = channelDescriptions[channelId] || `Channel #${channelId}`;
+    }
+    
+    // Update input placeholder
+    const messageInput = document.getElementById('message-input');
+    if (messageInput) {
+        messageInput.placeholder = `Message #${channelId}`;
+    }
+    
+    // Show/hide messages based on the channel
+    const allMessages = document.querySelectorAll('.message-item');
+    allMessages.forEach(message => {
+        const messageChannel = message.dataset.channel || 'general';
+        if (messageChannel === channelId) {
+            message.style.display = '';
+        } else {
+            message.style.display = 'none';
+        }
+    });
+    
+    // Scroll to bottom of new channel
+    setTimeout(scrollToBottom, 100);
+}
+
+// User Profile Functions
+function showUserProfile(username) {
+    // Don't show profile for clicks on your own username
+    if (username === '{{ session.user }}') {
+        showCurrentUserProfile();
+        return;
+    }
+    
+    const modal = document.getElementById('user-profile-modal');
+    const profileUsername = document.getElementById('profile-username');
+    const profileDisplayName = document.getElementById('profile-display-name');
+    const profileBio = document.getElementById('profile-bio');
+    const profileJoined = document.getElementById('profile-joined');
+    const profileAvatar = document.getElementById('profile-avatar-placeholder');
+    const friendRequestBtn = document.getElementById('friend-request-btn');
+    const sendDmBtn = document.getElementById('send-dm-btn');
+    
+    // Show loading state
+    profileUsername.textContent = username;
+    profileDisplayName.textContent = 'Loading...';
+    profileBio.textContent = 'Loading user information...';
+    profileJoined.textContent = 'Joined: Loading...';
+    
+    // Create avatar
+    if (username === 'huntsmangg') {
+        profileAvatar.innerHTML = `<div class="avatar admin-avatar large-avatar">
+            <i class="fas fa-crown"></i>
+        </div>`;
+    } else {
+        profileAvatar.innerHTML = `<div class="avatar user-avatar large-avatar">
+            ${username.charAt(0).toUpperCase()}
+        </div>`;
+    }
+    
+    // Show the modal
+    modal.style.display = 'block';
+    
+    // Fetch user data
+    fetch(`/get_user_profile?username=${encodeURIComponent(username)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                profileUsername.textContent = data.username;
+                profileDisplayName.textContent = data.display_name || username;
+                profileBio.textContent = data.bio || 'This user has not set a bio yet.';
+                profileJoined.textContent = `Joined: ${data.joined_date || 'Unknown'}`;
+                
+                // Update friend request button based on friendship status
+                if (data.is_friend) {
+                    friendRequestBtn.innerHTML = '<i class="fas fa-user-check"></i> Friends';
+                    friendRequestBtn.disabled = true;
+                    friendRequestBtn.style.background = '#4f545c';
+                } else if (data.friend_request_sent) {
+                    friendRequestBtn.innerHTML = '<i class="fas fa-clock"></i> Request Sent';
+                    friendRequestBtn.disabled = true;
+                    friendRequestBtn.style.background = '#4f545c';
+                } else if (data.friend_request_received) {
+                    friendRequestBtn.innerHTML = '<i class="fas fa-user-plus"></i> Accept Request';
+                    friendRequestBtn.disabled = false;
+                    friendRequestBtn.style.background = '#5865f2';
+                } else {
+                    friendRequestBtn.innerHTML = '<i class="fas fa-user-plus"></i> Add Friend';
+                    friendRequestBtn.disabled = false;
+                    friendRequestBtn.style.background = '#5865f2';
+                }
+                
+                // Store username for actions
+                friendRequestBtn.dataset.username = username;
+                sendDmBtn.dataset.username = username;
+            } else {
+                profileDisplayName.textContent = username;
+                profileBio.textContent = 'Could not load user information.';
+                profileJoined.textContent = 'Joined: Unknown';
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching user profile:', error);
+            profileDisplayName.textContent = username;
+            profileBio.textContent = 'Error loading user information.';
+            profileJoined.textContent = 'Joined: Unknown';
+        });
+}
+
+function closeUserProfile() {
+    const modal = document.getElementById('user-profile-modal');
+    modal.style.display = 'none';
+}
+
+function showCurrentUserProfile() {
+    showUserProfile('{{ session.user }}');
+}
+
+function sendFriendRequest() {
+    const btn = document.getElementById('friend-request-btn');
+    const username = btn.dataset.username;
+    
+    if (!username) return;
+    
+    // Disable button and show loading state
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+    
+    fetch('/send_friend_request', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username: username })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            btn.innerHTML = '<i class="fas fa-clock"></i> Request Sent';
+            btn.disabled = true;
+            btn.style.background = '#4f545c';
+        } else {
+            btn.innerHTML = '<i class="fas fa-user-plus"></i> Add Friend';
+            btn.disabled = false;
+            showError(data.error || 'Failed to send friend request');
+        }
+    })
+    .catch(error => {
+        console.error('Error sending friend request:', error);
+        btn.innerHTML = '<i class="fas fa-user-plus"></i> Add Friend';
+        btn.disabled = false;
+        showError('Network error. Please try again.');
+    });
+}
+
+function startDirectMessage() {
+    const btn = document.getElementById('send-dm-btn');
+    const username = btn.dataset.username;
+    
+    if (!username) return;
+    
+    // Close the profile modal
+    closeUserProfile();
+    
+    // TODO: In a real implementation, we would start a DM with this user
+    // For now, just show a message
+    showError(`Direct messaging with ${username} is not implemented yet.`);
+}
+
+// DM Modal Functions
+function showNewDMModal() {
+    const modal = document.getElementById('new-dm-modal');
+    const searchInput = document.getElementById('dm-search-input');
+    
+    modal.style.display = 'block';
+    
+    // Focus the search input
+    setTimeout(() => {
+        searchInput.focus();
+    }, 100);
+    
+    // Set up search input event listener
+    searchInput.addEventListener('input', searchUsers);
+}
+
+function closeNewDMModal() {
+    const modal = document.getElementById('new-dm-modal');
+    modal.style.display = 'none';
+}
+
+function searchUsers() {
+    const searchInput = document.getElementById('dm-search-input');
+    const searchResults = document.getElementById('dm-search-results');
+    const query = searchInput.value.trim();
+    
+    if (query.length < 2) {
+        searchResults.innerHTML = '<div class="empty-search">Type at least 2 characters to search</div>';
+        return;
+    }
+    
+    searchResults.innerHTML = '<div class="loading-search"><i class="fas fa-spinner fa-spin"></i> Searching...</div>';
+    
+    // Fetch users matching the search query
+    fetch(`/search_users?query=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.users.length > 0) {
+                const usersHtml = data.users.map(user => `
+                    <div class="dm-user-item" onclick="selectUserForDM('${user.username}')">
+                        <div class="dm-user-avatar">
+                            ${user.is_admin ? 
+                                `<div class="avatar admin-avatar">
+                                    <i class="fas fa-crown"></i>
+                                </div>` :
+                                `<div class="avatar user-avatar">
+                                    ${user.username.charAt(0).toUpperCase()}
+                                </div>`
+                            }
+                        </div>
+                        <div class="dm-user-info">
+                            <div class="dm-user-name">${escapeHtml(user.username)}</div>
+                            <div class="dm-user-status">${user.is_admin ? 'Administrator' : 'Member'}</div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                searchResults.innerHTML = usersHtml;
+            } else {
+                searchResults.innerHTML = '<div class="empty-search">No users found</div>';
+            }
+        })
+        .catch(error => {
+            console.error('Error searching users:', error);
+            searchResults.innerHTML = '<div class="empty-search">Error searching users</div>';
+        });
+}
+
+function selectUserForDM(username) {
+    // Close the modal
+    closeNewDMModal();
+    
+    // TODO: In a real implementation, we would start a DM with this user
+    // For now, just show a message
+    showError(`Direct messaging with ${username} is not implemented yet.`);
+}
+
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize page
@@ -1143,6 +2066,28 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Start real-time message polling
     startMessagePolling();
+    
+    // Set up modal close on escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeUserProfile();
+            closeNewDMModal();
+        }
+    });
+    
+    // Set up modal close on outside click
+    window.addEventListener('click', function(e) {
+        const userProfileModal = document.getElementById('user-profile-modal');
+        const newDmModal = document.getElementById('new-dm-modal');
+        
+        if (e.target === userProfileModal) {
+            closeUserProfile();
+        }
+        
+        if (e.target === newDmModal) {
+            closeNewDMModal();
+        }
+    });
 });
 
 // Real-time message polling
@@ -1336,7 +2281,7 @@ function loadMembersList() {
         .then(data => {
             if (data.success) {
                 displayMembers(data.members);
-                updateMemberCounts(data.members.length);
+                // updateMemberCounts is now called from displayMembers
             } else {
                 membersList.innerHTML = `
                     <div class="no-members">
@@ -1365,20 +2310,41 @@ function displayMembers(members) {
         membersList.innerHTML = `
             <div class="no-members">
                 <i class="fas fa-users"></i>
-                <p>No members online</p>
+                <p>No members found</p>
             </div>
         `;
         return;
     }
     
-    // Sort members (admin first, then alphabetically)
+    // Sort members (admin first, then online users, then offline users, all alphabetically within groups)
     members.sort((a, b) => {
+        // Admins first
         if (a.is_admin && !b.is_admin) return -1;
         if (!a.is_admin && b.is_admin) return 1;
+        
+        // Then online users
+        if (a.status === 'online' && b.status !== 'online') return -1;
+        if (a.status !== 'online' && b.status === 'online') return 1;
+        
+        // Then alphabetically
         return a.username.localeCompare(b.username);
     });
     
-    const membersHtml = members.map(member => {
+    // Group headers
+    let onlineHeader = `<div class="member-group-header">Online</div>`;
+    let offlineHeader = `<div class="member-group-header">Offline</div>`;
+    
+    // Count online members
+    const onlineCount = members.filter(m => m.status === 'online').length;
+    const offlineCount = members.length - onlineCount;
+    
+    // Create HTML for each member
+    let onlineMembers = '';
+    let offlineMembers = '';
+    
+    members.forEach(member => {
+        const isOnline = member.status === 'online';
+        
         const avatarHtml = member.is_admin ? 
             `<div class="member-avatar admin">
                 <i class="fas fa-crown"></i>
@@ -1388,40 +2354,65 @@ function displayMembers(members) {
                 <img src="${member.profile_picture}" alt="Profile" onload="this.style.opacity=1" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <div style="display:none" class="member-avatar-fallback">${member.username.charAt(0).toUpperCase()}</div>
             </div>` :
-            `<div class="member-avatar member-avatar-text">
+            `<div class="member-avatar member-avatar-text ${!isOnline ? 'offline' : ''}">
                 ${member.username.charAt(0).toUpperCase()}
             </div>`;
         
-        return `
-            <div class="member-item" onclick="mentionUser('${member.username}')">
+        const memberHtml = `
+            <div class="member-item ${!isOnline ? 'offline-member' : ''}" onclick="mentionUser('${member.username}')">
                 ${avatarHtml}
                 <div class="member-info">
-                    <div class="member-name ${member.is_admin ? 'admin' : ''}">
+                    <div class="member-name ${member.is_admin ? 'admin' : ''} ${!isOnline ? 'offline-text' : ''}">
                         ${escapeHtml(member.username)}
                         ${member.is_admin ? '<span class="member-badge">ADMIN</span>' : ''}
                     </div>
-                    <div class="member-status">
+                    <div class="member-status ${!isOnline ? 'offline-text' : ''}">
                         ${member.is_admin ? 'Administrator' : 'Member'}
+                        ${!isOnline ? ' (offline)' : ''}
                     </div>
                 </div>
             </div>
         `;
-    }).join('');
+        
+        if (isOnline) {
+            onlineMembers += memberHtml;
+        } else {
+            offlineMembers += memberHtml;
+        }
+    });
+    
+    // Combine sections with headers
+    let membersHtml = '';
+    
+    if (onlineCount > 0) {
+        membersHtml += onlineHeader + onlineMembers;
+    }
+    
+    if (offlineCount > 0) {
+        membersHtml += offlineHeader + offlineMembers;
+    }
     
     membersList.innerHTML = membersHtml;
+    
+    // Update the member counts
+    updateMemberCounts(members);
 }
 
 // Update member counts in UI
-function updateMemberCounts(count) {
+function updateMemberCounts(members) {
     const onlineCount = document.getElementById('online-count');
     const memberCount = document.getElementById('member-count');
     
+    // Count online members
+    const onlineMembers = members.filter(m => m.status === 'online').length;
+    const totalCount = members.length;
+    
     if (onlineCount) {
-        onlineCount.textContent = count;
+        onlineCount.textContent = onlineMembers;
     }
     
     if (memberCount) {
-        memberCount.textContent = count;
+        memberCount.textContent = totalCount;
     }
 }
 
@@ -1480,7 +2471,7 @@ setTimeout(() => {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    updateMemberCounts(data.members.length);
+                    updateMemberCounts(data.members);
                 }
             })
             .catch(error => {

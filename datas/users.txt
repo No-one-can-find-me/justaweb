@@ -12,5 +12,10 @@
     "bio": "i am shadow",
     "joined_date": "2025-07-14"
   },
-  "hunt": "1976abcd?"
+  "hunt": {
+    "password": "1976abcd?",
+    "display_name": null,
+    "bio": null,
+    "joined_date": "2025-07-14"
+  }
 }
