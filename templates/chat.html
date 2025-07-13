@@ -34,10 +34,10 @@
                             <div class="avatar admin-avatar">
                                 <i class="fas fa-crown"></i>
                             </div>
-                        {% elif message.profile_picture %}
-                            <img src="{{ message.profile_picture }}" alt="Profile" class="avatar-img" loading="eager" onload="handleAvatarLoad(this)" onerror="handleAvatarError(this)">
                         {% else %}
-                            <img src="{{ url_for('static', filename='images/profile_icon.jpg') }}" alt="Profile" class="avatar-img" loading="eager" onload="handleAvatarLoad(this)" onerror="handleAvatarError(this)">
+                            <div class="avatar user-avatar">
+                                {{ message.user[0].upper() }}
+                            </div>
                         {% endif %}
                     </div>
                     
@@ -543,6 +543,26 @@
     font-size: 14px;
 }
 
+.member-avatar-text {
+    background: #5865f2;
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.member-avatar-fallback {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #5865f2;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+}
+
 .member-info {
     flex: 1;
     min-width: 0;
@@ -692,14 +712,17 @@
 
 
 
-// Generate user avatar with profile picture
+// Generate user avatar with CSS fallback
 function createUserAvatar(username, profilePicture = null, isCurrentUser = false) {
     if (username === 'huntsmangg') {
         return `<div class="avatar admin-avatar"><i class="fas fa-crown"></i></div>`;
-    } else {
-        const imgSrc = profilePicture || '/static/images/profile_icon.jpg';
+    } else if (profilePicture) {
         const avatarId = `avatar-${username}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-        return `<img id="${avatarId}" src="${imgSrc}" alt="Profile" class="avatar-img" loading="eager" onload="handleAvatarLoad(this)" onerror="handleAvatarError(this)">`;
+        return `<img id="${avatarId}" src="${profilePicture}" alt="Profile" class="avatar-img" loading="eager" onload="handleAvatarLoad(this)" onerror="handleAvatarError(this)">`;
+    } else {
+        // CSS-generated avatar with first letter of username
+        const firstLetter = username.charAt(0).toUpperCase();
+        return `<div class="avatar user-avatar">${firstLetter}</div>`;
     }
 }
 
@@ -718,35 +741,30 @@ function handleAvatarLoad(img) {
     console.log('Avatar loaded successfully for:', img.id);
 }
 
-// Handle avatar image load error with automatic retry
+// Handle avatar image load error with CSS fallback
 function handleAvatarError(img) {
-    console.warn('Avatar failed to load, retrying...', img.id);
+    console.warn('Avatar failed to load, showing CSS fallback...', img.id);
     
-    // Add error class for styling
-    img.classList.add('error');
+    // Hide the failed image
+    img.style.display = 'none';
     
-    // Retry loading with cache-busting parameter
-    if (!img.dataset.retryCount) {
-        img.dataset.retryCount = '0';
+    // Create CSS-generated avatar fallback
+    const placeholder = document.createElement('div');
+    placeholder.className = 'avatar user-avatar';
+    
+    // Try to get username from nearby elements or use first letter of alt text
+    const messageElement = img.closest('.message-item');
+    let username = 'U'; // Default fallback
+    
+    if (messageElement) {
+        const usernameElement = messageElement.querySelector('.username');
+        if (usernameElement) {
+            username = usernameElement.textContent.trim();
+        }
     }
     
-    const retryCount = parseInt(img.dataset.retryCount);
-    if (retryCount < 3) {
-        img.dataset.retryCount = (retryCount + 1).toString();
-        
-        // Retry after a short delay with cache-busting
-        setTimeout(() => {
-            img.src = '/static/images/profile_icon.jpg?retry=' + retryCount + '&t=' + Date.now();
-        }, 1000 * (retryCount + 1)); // Increasing delay for each retry
-    } else {
-        // Final fallback - show a placeholder
-        img.style.display = 'none';
-        const placeholder = document.createElement('div');
-        placeholder.className = 'avatar user-avatar';
-        placeholder.style.background = '#5865f2';
-        placeholder.textContent = img.alt.charAt(0).toUpperCase();
-        img.parentNode.insertBefore(placeholder, img);
-    }
+    placeholder.textContent = username.charAt(0).toUpperCase();
+    img.parentNode.insertBefore(placeholder, img);
 }
 
 // Initialize page
@@ -771,9 +789,9 @@ function autoLoadExistingAvatars() {
                 img.onload = () => handleAvatarLoad(img);
                 img.onerror = () => handleAvatarError(img);
                 
-                // Trigger load if needed
-                if (!img.src || img.src.includes('undefined')) {
-                    img.src = '/static/images/profile_icon.jpg';
+                // Convert to CSS avatar if no proper src
+                if (!img.src || img.src.includes('undefined') || img.src.includes('profile_icon.jpg')) {
+                    handleAvatarError(img);
                 }
             }
         });
@@ -826,29 +844,16 @@ function initializeAvatar(img) {
     // If image is already loaded
     if (img.complete && img.naturalWidth > 0) {
         handleAvatarLoad(img);
-    } else if (!img.src || img.src.includes('undefined')) {
-        img.src = '/static/images/profile_icon.jpg';
+    } else if (!img.src || img.src.includes('undefined') || img.src.includes('profile_icon.jpg')) {
+        // Convert to CSS avatar instead of trying to load missing image
+        handleAvatarError(img);
     }
 }
 
-// Preload profile image to ensure it's in browser cache
+// Profile image preloading removed - using CSS avatars instead
 function preloadProfileImage() {
-    const img = new Image();
-    img.src = '/static/images/profile_icon.jpg';
-    img.onload = function() {
-        console.log('Profile image preloaded successfully');
-        window.profileImageLoaded = true;
-    };
-    img.onerror = function() {
-        console.warn('Failed to preload profile image');
-        window.profileImageLoaded = false;
-        
-        // Try alternative loading method
-        setTimeout(() => {
-            const retryImg = new Image();
-            retryImg.src = '/static/images/profile_icon.jpg?fallback=' + Date.now();
-        }, 2000);
-    };
+    console.log('Using CSS-generated avatars - no preloading needed');
+    window.profileImageLoaded = true;
 }
 
 // Real-time avatar health check (runs periodically)
@@ -878,8 +883,8 @@ function refreshAllAvatars() {
     const avatarImages = document.querySelectorAll('.avatar-img');
     avatarImages.forEach(img => {
         if (!img.classList.contains('loaded')) {
-            img.classList.remove('error');
-            img.src = '/static/images/profile_icon.jpg?refresh=' + Date.now();
+            // Convert failed images to CSS avatars
+            handleAvatarError(img);
         }
     });
 }
@@ -1378,8 +1383,13 @@ function displayMembers(members) {
             `<div class="member-avatar admin">
                 <i class="fas fa-crown"></i>
             </div>` :
+            member.profile_picture ?
             `<div class="member-avatar">
-                <img src="${member.profile_picture || '/static/images/profile_icon.jpg'}" alt="Profile">
+                <img src="${member.profile_picture}" alt="Profile" onload="this.style.opacity=1" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div style="display:none" class="member-avatar-fallback">${member.username.charAt(0).toUpperCase()}</div>
+            </div>` :
+            `<div class="member-avatar member-avatar-text">
+                ${member.username.charAt(0).toUpperCase()}
             </div>`;
         
         return `
