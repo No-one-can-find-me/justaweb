@@ -219,7 +219,6 @@ def send_message():
             return jsonify({'success': False, 'error': 'Invalid JSON data'}), 400
         
         message_text = data.get('message', '').strip()
-        reply_to = data.get('reply_to')
     except Exception as e:
         return jsonify({'success': False, 'error': 'Invalid request format'}), 400
     
@@ -246,8 +245,6 @@ def send_message():
         'user': session['user'],
         'text': message_text,
         'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-        'edited': False,
-        'reply_to': reply_to,
         'profile_picture': get_user_profile_picture(session['user'])
     }
     
@@ -256,53 +253,9 @@ def send_message():
     
     return jsonify({'success': True, 'message': message})
 
-@app.route('/edit_message/<int:message_id>', methods=['POST'])
-def edit_message(message_id):
-    if 'user' not in session:
-        return jsonify({'success': False, 'error': 'Not logged in'}), 401
-    
-    try:
-        data = request.get_json()
-        if not data:
-            return jsonify({'success': False, 'error': 'Invalid JSON data'}), 400
-        
-        new_text = data.get('message', '').strip()
-    except Exception as e:
-        return jsonify({'success': False, 'error': 'Invalid request format'}), 400
-    
-    if not new_text:
-        return jsonify({'success': False, 'error': 'Message cannot be empty'}), 400
-    
-    if len(new_text) > 2000:
-        return jsonify({'success': False, 'error': 'Message too long (max 2000 characters)'}), 400
-    
-    messages = load_messages()
-    for message in messages:
-        if message['id'] == message_id and message['user'] == session['user']:
-            message['text'] = new_text
-            message['edited'] = True
-            message['edit_timestamp'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            # Ensure profile picture is set
-            if 'profile_picture' not in message:
-                message['profile_picture'] = get_user_profile_picture(message['user'])
-            save_messages(messages)
-            return jsonify({'success': True, 'message': message})
-    
-    return jsonify({'success': False, 'error': 'Message not found or unauthorized'}), 404
 
-@app.route('/delete_message/<int:message_id>', methods=['DELETE'])
-def delete_message(message_id):
-    if 'user' not in session:
-        return jsonify({'success': False, 'error': 'Not logged in'}), 401
-    
-    messages = load_messages()
-    for i, message in enumerate(messages):
-        if message['id'] == message_id and (message['user'] == session['user'] or session['user'] in ADMIN_USERS):
-            del messages[i]
-            save_messages(messages)
-            return jsonify({'success': True})
-    
-    return jsonify({'success': False, 'error': 'Message not found or unauthorized'}), 404
+
+
 
 @app.route('/get_messages')
 def get_messages():

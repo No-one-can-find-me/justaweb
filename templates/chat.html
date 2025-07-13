@@ -27,12 +27,6 @@
     <div class="chat-messages" id="chat-messages">
         {% for message in messages %}
             <div class="message-item" data-message-id="{{ message.id }}">
-                {% if message.reply_to %}
-                    <div class="reply-reference">
-                        <i class="fas fa-reply"></i>
-                        <span>Replying to message</span>
-                    </div>
-                {% endif %}
                 
                 <div class="message-content">
                     <div class="message-avatar">
@@ -66,21 +60,7 @@
                         </div>
                         
                         <div class="message-actions">
-                            <button class="action-btn reply-btn" data-message-id="{{ message.id }}" data-username="{{ message.user }}">
-                                <i class="fas fa-reply"></i>
-                            </button>
-                            {% if session.user == message.user %}
-                                <button class="action-btn edit-btn" data-message-id="{{ message.id }}">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="action-btn delete-btn" data-message-id="{{ message.id }}">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            {% elif session.user == 'huntsmangg' %}
-                                <button class="action-btn delete-btn" data-message-id="{{ message.id }}">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            {% endif %}
+                            <!-- Buttons removed -->
                         </div>
                     </div>
                 </div>
@@ -88,17 +68,7 @@
         {% endfor %}
     </div>
 
-    <div class="chat-input-container">
-        <div class="reply-preview" id="reply-preview" style="display: none;">
-            <div class="reply-info">
-                <i class="fas fa-reply"></i>
-                <span id="reply-text">Replying to <span id="reply-user"></span></span>
-            </div>
-            <button class="cancel-reply" onclick="cancelReply()">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        
+    <div class="chat-input-container">        
         <div class="chat-input-area">
             <div class="input-wrapper">
                 <input type="text" 
@@ -246,23 +216,9 @@
     background: rgba(4,4,5,0.07);
 }
 
-.message-item:hover .message-actions {
-    opacity: 1;
-}
+/* Message action hover effects removed */
 
-.reply-reference {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: #8e9297;
-    font-size: 12px;
-    margin-left: 56px;
-    margin-bottom: 2px;
-}
-
-.reply-reference i {
-    font-size: 10px;
-}
+/* Reply reference styles removed */
 
 .message-content {
     display: flex;
@@ -400,74 +356,14 @@
     font-size: 16px;
 }
 
-.message-actions {
-    position: absolute;
-    top: -16px;
-    right: 8px;
-    background: #2f3136;
-    border: 1px solid #202225;
-    border-radius: 4px;
-    display: flex;
-    opacity: 0;
-    transition: opacity 0.1s;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-}
-
-.action-btn {
-    background: none;
-    border: none;
-    color: #b9bbbe;
-    padding: 6px 8px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: all 0.1s;
-}
-
-.action-btn:hover {
-    background: #36393f;
-    color: #dcddde;
-}
-
-.delete-btn:hover {
-    color: #ed4245;
-}
+/* Message action styles removed */
 
 .chat-input-container {
     padding: 0 16px 24px;
     background: #36393f;
 }
 
-.reply-preview {
-    background: #2f3136;
-    border-radius: 8px 8px 0 0;
-    padding: 8px 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-left: 4px solid #5865f2;
-}
-
-.reply-info {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: #8e9297;
-    font-size: 14px;
-}
-
-.cancel-reply {
-    background: none;
-    border: none;
-    color: #8e9297;
-    cursor: pointer;
-    padding: 4px;
-    border-radius: 4px;
-}
-
-.cancel-reply:hover {
-    background: #36393f;
-    color: #dcddde;
-}
+/* Reply preview styles removed */
 
 .chat-input-area {
     background: #40444b;
@@ -728,7 +624,6 @@
     .online-count span:not(.online-number) {
         display: none;
     }
-}
     
     .channel-description {
         display: none;
@@ -767,15 +662,7 @@
         font-size: 14px;
     }
     
-    .message-actions {
-        position: static;
-        opacity: 1;
-        margin-top: 8px;
-        background: none;
-        border: none;
-        box-shadow: none;
-        justify-content: flex-start;
-    }
+    /* Message action mobile styles removed */
     
     .chat-input-area {
         padding: 8px 12px;
@@ -784,6 +671,7 @@
     #message-input {
         font-size: 16px; /* Prevents zoom on iOS */
     }
+}
 
 
 /* Animation for new message notification */
@@ -800,7 +688,7 @@
 </style>
 
 <script>
-let replyingTo = null;
+// Reply functionality removed
 
 
 
@@ -1035,23 +923,7 @@ function setupEventListeners() {
         messagesContainer.addEventListener('scroll', checkScrollPosition);
     }
     
-    // Delegate click events for dynamic buttons
-    document.addEventListener('click', function(e) {
-        if (e.target.closest('.reply-btn')) {
-            const btn = e.target.closest('.reply-btn');
-            const messageId = btn.getAttribute('data-message-id');
-            const username = btn.getAttribute('data-username');
-            replyToMessage(messageId, username);
-        } else if (e.target.closest('.edit-btn')) {
-            const btn = e.target.closest('.edit-btn');
-            const messageId = btn.getAttribute('data-message-id');
-            editMessage(messageId);
-        } else if (e.target.closest('.delete-btn')) {
-            const btn = e.target.closest('.delete-btn');
-            const messageId = btn.getAttribute('data-message-id');
-            deleteMessage(messageId);
-        }
-    });
+    // Delegate click events for dynamic buttons - removed all button handlers
 }
 
 // Show error message
@@ -1110,14 +982,7 @@ function createMessageHTML(message) {
     const avatar = createUserAvatar(message.user, message.profile_picture, isCurrentUser);
     
     let replyHtml = '';
-    if (message.reply_to) {
-        replyHtml = `
-            <div class="reply-reference">
-                <i class="fas fa-reply"></i>
-                <span>Replying to message</span>
-            </div>
-        `;
-    }
+    // Reply functionality removed
     
     let adminBadge = '';
     let usernameClass = '';
@@ -1132,36 +997,7 @@ function createMessageHTML(message) {
     }
     
     let actionButtons = '';
-    if (isCurrentUser || currentUser === 'huntsmangg') {
-        actionButtons = `
-            <button class="action-btn reply-btn" data-message-id="${message.id}" data-username="${message.user}">
-                <i class="fas fa-reply"></i>
-            </button>
-        `;
-        
-        if (isCurrentUser) {
-            actionButtons += `
-                <button class="action-btn edit-btn" data-message-id="${message.id}">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button class="action-btn delete-btn" data-message-id="${message.id}">
-                    <i class="fas fa-trash"></i>
-                </button>
-            `;
-        } else if (currentUser === 'huntsmangg') {
-            actionButtons += `
-                <button class="action-btn delete-btn" data-message-id="${message.id}">
-                    <i class="fas fa-trash"></i>
-                </button>
-            `;
-        }
-    } else {
-        actionButtons = `
-            <button class="action-btn reply-btn" data-message-id="${message.id}" data-username="${message.user}">
-                <i class="fas fa-reply"></i>
-            </button>
-        `;
-    }
+    // All buttons removed
     
     return `
         <div class="message-item" data-message-id="${message.id}">
@@ -1191,88 +1027,7 @@ function createMessageHTML(message) {
     `;
 }
 
-// Update existing message
-function updateMessageInChat(messageId, message) {
-    const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
-    if (messageElement) {
-        const messageTextElement = messageElement.querySelector(`#message-text-${messageId}`);
-        if (messageTextElement) {
-            messageTextElement.innerHTML = escapeHtml(message.text).replace(/\n/g, '<br>');
-        }
-        
-        // Add or update edited indicator
-        const messageHeader = messageElement.querySelector('.message-header');
-        let editedIndicator = messageHeader.querySelector('.edited-indicator');
-        if (!editedIndicator && message.edited) {
-            editedIndicator = document.createElement('span');
-            editedIndicator.className = 'edited-indicator';
-            editedIndicator.textContent = '(edited)';
-            messageHeader.appendChild(editedIndicator);
-        }
-    }
-}
-
-// Remove message from chat
-function removeMessageFromChat(messageId) {
-    const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
-    if (messageElement) {
-        messageElement.remove();
-    }
-}
-
-// Create HTML for a new message
-function createMessageHTML(message) {
-    const isAdmin = message.user === 'huntsmangg';
-    const currentUser = '{{ session.user }}';
-    
-    return `
-        <div class="message-item" data-message-id="${message.id}">
-            ${message.reply_to ? `
-                <div class="reply-reference">
-                    <i class="fas fa-reply"></i>
-                    <span>Replying to message</span>
-                </div>
-            ` : ''}
-            
-            <div class="message-content">
-                <div class="message-avatar">
-                    ${createUserAvatar(message.user, message.profile_picture, isCurrentUser)}
-                </div>
-                
-                <div class="message-body">
-                    <div class="message-header">
-                        <span class="username ${isAdmin ? 'admin-username' : ''}">
-                            ${escapeHtml(message.user)}
-                            ${isAdmin ? '<span class="admin-badge">ADMIN</span>' : ''}
-                        </span>
-                        <span class="timestamp">${message.timestamp}</span>
-                        ${message.edited ? '<span class="edited-indicator">(edited)</span>' : ''}
-                    </div>
-                    
-                    <div class="message-text" id="message-text-${message.id}">
-                        ${escapeHtml(message.text).replace(/\n/g, '<br>')}
-                    </div>
-                    
-                    <div class="message-actions">
-                        <button class="action-btn reply-btn" data-message-id="${message.id}" data-username="${escapeHtml(message.user)}">
-                            <i class="fas fa-reply"></i>
-                        </button>
-                        ${currentUser === message.user || currentUser === 'huntsmangg' ? `
-                            ${currentUser === message.user ? `
-                                <button class="action-btn edit-btn" data-message-id="${message.id}">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                            ` : ''}
-                            <button class="action-btn delete-btn" data-message-id="${message.id}">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        ` : ''}
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-}
+// Message manipulation functions removed
 
 // Escape HTML to prevent XSS
 function escapeHtml(text) {
@@ -1306,8 +1061,7 @@ function sendMessage() {
     }
     
     const data = {
-        message: message,
-        reply_to: replyingTo
+        message: message
     };
     
     fetch('/send_message', {
@@ -1321,7 +1075,6 @@ function sendMessage() {
     .then(data => {
         if (data.success) {
             input.value = '';
-            cancelReply();
             // Don't add message manually - let polling handle it for consistency
             // This ensures the message appears at the same time for all users
             
@@ -1348,115 +1101,13 @@ function sendMessage() {
     });
 }
 
-// Reply to message
-function replyToMessage(messageId, username) {
-    replyingTo = messageId;
-    const replyPreview = document.getElementById('reply-preview');
-    const replyUser = document.getElementById('reply-user');
-    const messageInput = document.getElementById('message-input');
-    
-    if (replyPreview) replyPreview.style.display = 'flex';
-    if (replyUser) replyUser.textContent = username;
-    if (messageInput) messageInput.focus();
-}
+// Reply functionality removed
 
-// Cancel reply
-function cancelReply() {
-    replyingTo = null;
-    const replyPreview = document.getElementById('reply-preview');
-    if (replyPreview) {
-        replyPreview.style.display = 'none';
-    }
-}
+// Edit functionality removed
 
-// Edit message
-function editMessage(messageId) {
-    const messageText = document.getElementById('message-text-' + messageId);
-    if (!messageText) {
-        showError('Message not found');
-        return;
-    }
-    
-    // Extract text content properly (handling <br> tags)
-    const currentText = messageText.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
-    
-    const newText = prompt('Edit your message:', currentText);
-    if (newText === null || newText.trim() === '' || newText.trim() === currentText.trim()) return;
-    
-    if (newText.length > 2000) {
-        showError('Message too long (max 2000 characters)');
-        return;
-    }
-    
-    fetch('/edit_message/' + messageId, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ message: newText.trim() })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            updateMessageInChat(messageId, data.message);
-        } else {
-            showError('Error editing message: ' + data.error);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showError('Failed to edit message. Please try again.');
-    });
-}
+// Delete functionality removed
 
-// Delete message
-function deleteMessage(messageId) {
-    if (!confirm('Are you sure you want to delete this message?')) return;
-    
-    fetch('/delete_message/' + messageId, {
-        method: 'DELETE'
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            removeMessageFromChat(messageId);
-        } else {
-            showError('Error deleting message: ' + data.error);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showError('Failed to delete message. Please try again.');
-    });
-}
-
-// Remove message from chat
-function removeMessageFromChat(messageId) {
-    const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
-    if (messageElement) {
-        messageElement.remove();
-    }
-}
-
-// Update message in chat (for edits)
-function updateMessageInChat(messageId, newMessage) {
-    const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
-    if (messageElement) {
-        const messageText = messageElement.querySelector(`#message-text-${messageId}`);
-        if (messageText) {
-            messageText.innerHTML = escapeHtml(newMessage.text).replace(/\n/g, '<br>');
-        }
-        
-        // Add edited indicator if not already present
-        const messageHeader = messageElement.querySelector('.message-header');
-        if (messageHeader && !messageHeader.querySelector('.edited-indicator')) {
-            const editedIndicator = document.createElement('span');
-            editedIndicator.className = 'edited-indicator';
-            editedIndicator.textContent = '(edited)';
-            messageHeader.appendChild(editedIndicator);
-        }
-    }
-}
+// Helper functions for message manipulation removed
 
 
 
@@ -1551,17 +1202,7 @@ function fetchNewMessages() {
                     }
                 }
                 
-                // Handle deleted messages - remove messages that no longer exist
-                if (data.current_message_ids) {
-                    const existingMessages = document.querySelectorAll('.message-item[data-message-id]');
-                    existingMessages.forEach(messageElement => {
-                        const messageId = parseInt(messageElement.dataset.messageId);
-                        if (!data.current_message_ids.includes(messageId)) {
-                            // Message was deleted, remove it from UI
-                            messageElement.remove();
-                        }
-                    });
-                }
+                // Message deletion functionality removed
             }
         })
         .catch(error => {
@@ -1651,23 +1292,7 @@ function setupEventListeners() {
         });
     }
     
-    // Add event listeners for action buttons
-    document.addEventListener('click', function(e) {
-        if (e.target.closest('.reply-btn')) {
-            const btn = e.target.closest('.reply-btn');
-            const messageId = btn.dataset.messageId;
-            const username = btn.dataset.username;
-            replyToMessage(messageId, username);
-        } else if (e.target.closest('.edit-btn')) {
-            const btn = e.target.closest('.edit-btn');
-            const messageId = btn.dataset.messageId;
-            editMessage(messageId);
-        } else if (e.target.closest('.delete-btn')) {
-            const btn = e.target.closest('.delete-btn');
-            const messageId = btn.dataset.messageId;
-            deleteMessage(messageId);
-        }
-    });
+    // Add event listeners for action buttons - removed all button handlers
 }
 
 // Members list functionality
