@@ -12,6 +12,8 @@ app.permanent_session_lifetime = timedelta(hours=24)  # Session expires after 24
 # File paths for data storage
 USERS_FILE = 'datas/users.txt'
 COMMENTS_FILE = 'datas/chats.txt'
+REDEEM_CODES_FILE = 'datas/redeem_codes.txt'
+SHOP_ITEMS_FILE = 'datas/shop_items.txt'
 
 # Admin users
 ADMIN_USERS = ['huntsmangg']
@@ -58,7 +60,8 @@ def get_user_data(username):
                 'password': password,
                 'display_name': None,
                 'bio': None,
-                'joined_date': datetime.now().strftime('%Y-%m-%d')
+                'joined_date': datetime.now().strftime('%Y-%m-%d'),
+                'coins': 0  # Initialize coins to 0
             }
             save_users(users)
         
@@ -161,6 +164,48 @@ def get_next_message_id():
     return max(msg.get('id', 0) for msg in messages) + 1
 
 # Initialize with admin user if users.txt is empty
+def load_redeem_codes():
+    """Load redeem codes from redeem_codes.txt file"""
+    try:
+        if os.path.exists(REDEEM_CODES_FILE):
+            with open(REDEEM_CODES_FILE, 'r', encoding='utf-8') as f:
+                content = f.read().strip()
+                if content:
+                    return json.loads(content)
+        return {}
+    except (json.JSONDecodeError, FileNotFoundError):
+        return {}
+
+def save_redeem_codes(codes):
+    """Save redeem codes to redeem_codes.txt file"""
+    try:
+        os.makedirs(os.path.dirname(REDEEM_CODES_FILE), exist_ok=True)
+        with open(REDEEM_CODES_FILE, 'w', encoding='utf-8') as f:
+            json.dump(codes, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        print(f"Error saving redeem codes: {e}")
+
+def load_shop_items():
+    """Load shop items from shop_items.txt file"""
+    try:
+        if os.path.exists(SHOP_ITEMS_FILE):
+            with open(SHOP_ITEMS_FILE, 'r', encoding='utf-8') as f:
+                content = f.read().strip()
+                if content:
+                    return json.loads(content)
+        return []
+    except (json.JSONDecodeError, FileNotFoundError):
+        return []
+
+def save_shop_items(items):
+    """Save shop items to shop_items.txt file"""
+    try:
+        os.makedirs(os.path.dirname(SHOP_ITEMS_FILE), exist_ok=True)
+        with open(SHOP_ITEMS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(items, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        print(f"Error saving shop items: {e}")
+
 def initialize_admin_user():
     """Initialize admin user if not exists"""
     users = load_users()
@@ -169,7 +214,8 @@ def initialize_admin_user():
             'password': '1976Abcd?',
             'display_name': 'Huntsman',
             'bio': 'Admin and creator of Huntsman Space',
-            'joined_date': datetime.now().strftime('%Y-%m-%d')
+            'joined_date': datetime.now().strftime('%Y-%m-%d'),
+            'coins': 1000  # Give admin some initial coins
         }
         save_users(users)
     elif isinstance(users['huntsmangg'], str):
@@ -179,8 +225,13 @@ def initialize_admin_user():
             'password': password,
             'display_name': 'Huntsman',
             'bio': 'Admin and creator of Huntsman Space',
-            'joined_date': datetime.now().strftime('%Y-%m-%d')
+            'joined_date': datetime.now().strftime('%Y-%m-%d'),
+            'coins': 1000  # Give admin some initial coins
         }
+        save_users(users)
+    elif 'coins' not in users['huntsmangg']:
+        # Add coins field if it doesn't exist
+        users['huntsmangg']['coins'] = 1000
         save_users(users)
 
 # Initialize admin user on startup
@@ -254,7 +305,8 @@ def register():
                     'password': password,
                     'display_name': None,
                     'bio': None,
-                    'joined_date': datetime.now().strftime('%Y-%m-%d')
+                    'joined_date': datetime.now().strftime('%Y-%m-%d'),
+                    'coins': 0  # Initialize coins to 0
                 }
                 save_users(users)
                 flash('Registration successful! Please login.', 'success')
@@ -357,14 +409,17 @@ def update_profile():
                 'password': password,
                 'display_name': None,
                 'bio': None,
-                'joined_date': datetime.now().strftime('%Y-%m-%d')
+                'joined_date': datetime.now().strftime('%Y-%m-%d'),
+                'coins': 0  # Initialize coins to 0
             }
         
-        # Update display name and bio
+        # Update display name, bio, and coins
         if 'display_name' not in users[current_username]:
             users[current_username]['display_name'] = None
         if 'bio' not in users[current_username]:
             users[current_username]['bio'] = None
+        if 'coins' not in users[current_username]:
+            users[current_username]['coins'] = 0
         
         users[current_username]['display_name'] = display_name if display_name else None
         users[current_username]['bio'] = bio if bio else None
@@ -599,6 +654,260 @@ def serve_website_logo():
     response.headers['Cache-Control'] = 'public, max-age=604800'  # Cache for 7 days
     response.headers['ETag'] = 'website-logo-v1'
     return response
+
+@app.route('/redeem', methods=['GET', 'POST'])
+def redeem_code():
+    if 'user' not in session:
+        flash('Please login to redeem codes!', 'error')
+        return redirect(url_for('login'))
+    
+    user_data = get_user_data(session['user'])
+    
+    if request.method == 'POST':
+        code = request.form.get('code', '').strip()
+        
+        if not code:
+            flash('Please enter a valid redeem code!', 'error')
+            return render_template('redeem.html', user_data=user_data, shop_items=load_shop_items())
+            
+        # Validate redeem code length
+        if len(code) < 4 or len(code) > 16:
+            flash('Redeem code must be between 4 and 16 characters long!', 'error')
+            return render_template('redeem.html', user_data=user_data, shop_items=load_shop_items())
+        
+        # Load redeem codes
+        redeem_codes = load_redeem_codes()
+        
+        if code not in redeem_codes:
+            flash('Invalid redeem code!', 'error')
+            return render_template('redeem.html', user_data=user_data, shop_items=load_shop_items())
+        
+        code_data = redeem_codes[code]
+        
+        # Check if code is expired
+        expiry_time = datetime.fromisoformat(code_data['expiry_time'])
+        if datetime.now() > expiry_time:
+            flash('This redeem code has expired!', 'error')
+            return render_template('redeem.html', user_data=user_data, shop_items=load_shop_items())
+        
+        # Check if maximum claims reached
+        if len(code_data['claimed_by']) >= code_data['max_claims']:
+            flash('This redeem code has reached its maximum claims!', 'error')
+            return render_template('redeem.html', user_data=user_data, shop_items=load_shop_items())
+        
+        # Check if user already claimed this code
+        if session['user'] in code_data['claimed_by']:
+            flash('You have already claimed this code!', 'error')
+            return render_template('redeem.html', user_data=user_data, shop_items=load_shop_items())
+        
+        # All checks passed, redeem the code
+        users = load_users()
+        
+        # Initialize coins if not present
+        if 'coins' not in users[session['user']]:
+            users[session['user']]['coins'] = 0
+        
+        # Add coins to user
+        users[session['user']]['coins'] += code_data['coin_value']
+        
+        # Add user to claimed list
+        code_data['claimed_by'].append(session['user'])
+        
+        # Save changes
+        save_users(users)
+        save_redeem_codes(redeem_codes)
+        
+        flash(f'Successfully redeemed code for {code_data["coin_value"]} coins!', 'success')
+        
+        # Update user data for template
+        user_data = get_user_data(session['user'])
+        return redirect(url_for('redeem_code'))
+    
+    # Load shop items
+    shop_items = load_shop_items()
+    
+    return render_template('redeem.html', user_data=user_data, shop_items=shop_items)
+
+@app.route('/shop')
+def shop():
+    if 'user' not in session:
+        flash('Please login to access the shop!', 'error')
+        return redirect(url_for('login'))
+    
+    user_data = get_user_data(session['user'])
+    shop_items = load_shop_items()
+    
+    return render_template('shop.html', user_data=user_data, shop_items=shop_items)
+
+@app.route('/purchase', methods=['POST'])
+def purchase_item():
+    if 'user' not in session:
+        flash('Please login to purchase items!', 'error')
+        return redirect(url_for('login'))
+    
+    # Get form data
+    item_id = request.form.get('item_id')
+    email = request.form.get('email')
+    
+    if not item_id or not email:
+        flash('Missing required information!', 'error')
+        return redirect(url_for('redeem_code'))
+    
+    # Load shop items and user data
+    shop_items = load_shop_items()
+    users = load_users()
+    user_data = users[session['user']]
+    
+    # Find the item
+    item = None
+    for shop_item in shop_items:
+        if str(shop_item['id']) == str(item_id):
+            item = shop_item
+            break
+    
+    if not item:
+        flash('Item not found!', 'error')
+        return redirect(url_for('redeem_code'))
+    
+    # Check if user has enough coins
+    if 'coins' not in user_data:
+        user_data['coins'] = 0
+    
+    if user_data['coins'] < item['price']:
+        flash('You do not have enough coins to purchase this item!', 'error')
+        return redirect(url_for('redeem_code'))
+    
+    # Deduct coins from user
+    user_data['coins'] -= item['price']
+    
+    # Save updated user data
+    save_users(users)
+    
+    # Send notification to admin via chat
+    purchase_message = {
+        'id': get_next_message_id(),
+        'user': 'system',
+        'message': f"PURCHASE NOTIFICATION: User '{session['user']}' purchased '{item['name']}' for {item['price']} coins. Email: {email}",
+        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'channel': 'general',
+        'profile_picture': None
+    }
+    
+    messages = load_messages()
+    messages.append(purchase_message)
+    save_messages(messages)
+    
+    flash(f'Successfully purchased {item["name"]}! Check your email for details.', 'success')
+    return redirect(url_for('shop'))
+
+@app.route('/add-shop-item', methods=['POST'])
+def add_shop_item():
+    if 'user' not in session or session['user'] not in ADMIN_USERS:
+        flash('You do not have permission to add shop items!', 'error')
+        return redirect(url_for('profile'))
+    
+    # Get form data
+    item_name = request.form.get('item_name', '').strip()
+    item_price = request.form.get('item_price', '')
+    item_validity = request.form.get('item_validity', '')
+    item_image = request.form.get('item_image', '').strip()
+    
+    # Validate inputs
+    if not item_name or not item_price or not item_validity or not item_image:
+        flash('All fields are required!', 'error')
+        return redirect(url_for('profile'))
+    
+    try:
+        item_price = int(item_price)
+        item_validity = int(item_validity)
+    except ValueError:
+        flash('Price and validity must be numbers!', 'error')
+        return redirect(url_for('profile'))
+    
+    # Load existing shop items
+    shop_items = load_shop_items()
+    
+    # Generate a new item ID
+    item_id = 1
+    if shop_items:
+        item_id = max(item['id'] for item in shop_items) + 1
+    
+    # Create new item
+    new_item = {
+        'id': item_id,
+        'name': item_name,
+        'price': item_price,
+        'validity': item_validity,
+        'image': item_image
+    }
+    
+    # Add to shop items
+    shop_items.append(new_item)
+    
+    # Save shop items
+    save_shop_items(shop_items)
+    
+    flash(f'Successfully added {item_name} to the shop!', 'success')
+    return redirect(url_for('profile'))
+
+@app.route('/create-redeem-code', methods=['POST'])
+def create_redeem_code():
+    if 'user' not in session or session['user'] not in ADMIN_USERS:
+        flash('You do not have permission to create redeem codes!', 'error')
+        return redirect(url_for('profile'))
+    
+    redeem_code = request.form.get('redeem_code', '').strip()
+    coin_value = request.form.get('coin_value', '')
+    max_claims = request.form.get('max_claims', '')
+    expiry_hours = request.form.get('expiry_hours', '')
+    
+    # Validate inputs
+    if not redeem_code or not coin_value or not max_claims or not expiry_hours:
+        flash('All fields are required!', 'error')
+        return redirect(url_for('profile'))
+    
+    # Validate redeem code length
+    if len(redeem_code) < 4 or len(redeem_code) > 16:
+        flash('Redeem code must be between 4 and 16 characters long!', 'error')
+        return redirect(url_for('profile'))
+    
+    try:
+        coin_value = int(coin_value)
+        max_claims = int(max_claims)
+        expiry_hours = int(expiry_hours)
+        
+        if coin_value < 1 or max_claims < 1 or expiry_hours < 1:
+            flash('Values must be positive numbers!', 'error')
+            return redirect(url_for('profile'))
+    except ValueError:
+        flash('Invalid number format!', 'error')
+        return redirect(url_for('profile'))
+    
+    # Load existing redeem codes
+    redeem_codes = load_redeem_codes()
+    
+    # Check if code already exists
+    if redeem_code in redeem_codes:
+        flash('This redeem code already exists!', 'error')
+        return redirect(url_for('profile'))
+    
+    # Create new redeem code
+    expiry_time = datetime.now() + timedelta(hours=expiry_hours)
+    
+    redeem_codes[redeem_code] = {
+        'coin_value': coin_value,
+        'max_claims': max_claims,
+        'expiry_time': expiry_time.isoformat(),
+        'created_by': session['user'],
+        'created_at': datetime.now().isoformat(),
+        'claimed_by': []
+    }
+    
+    # Save redeem codes
+    save_redeem_codes(redeem_codes)
+    
+    flash(f'Redeem code "{redeem_code}" created successfully!', 'success')
+    return redirect(url_for('profile'))
 
 if __name__ == '__main__':
     app.run(debug=True)

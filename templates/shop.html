@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Shop - Huntsman Space{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get the modal
+        const modal = document.getElementById('purchaseModal');
+        
+        // Get the <span> element that closes the modal
+        const closeBtn = document.getElementsByClassName('close-modal')[0];
+        
+        // Get all buy buttons
+        const buyButtons = document.querySelectorAll('.buy-button');
+        
+        // When the user clicks on a buy button, open the modal
+        buyButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const itemId = this.getAttribute('data-item-id');
+                const itemName = this.getAttribute('data-item-name');
+                const itemPrice = this.getAttribute('data-item-price');
+                const userCoins = parseInt("{{ user_data.coins|default(0) }}");
+                
+                // Check if user has enough coins
+                if (userCoins < parseInt(itemPrice)) {
+                    alert("You don't have enough coins to purchase this item!");
+                    return;
+                }
+                
+                // Set modal content
+                document.getElementById('modalItemName').textContent = itemName;
+                document.getElementById('modalItemPrice').textContent = itemPrice;
+                document.getElementById('itemId').value = itemId;
+                
+                // Display the modal
+                modal.style.display = 'block';
+            });
+        });
+        
+        // When the user clicks on <span> (x), close the modal
+        closeBtn.addEventListener('click', function() {
+            modal.style.display = 'none';
+        });
+        
+        // When the user clicks anywhere outside of the modal, close it
+        window.addEventListener('click', function(event) {
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        });
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<section class="auth-section shop-page">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1 class="auth-title">Shop</h1>
+                <p class="auth-subtitle">Purchase exclusive items with your coins</p>
+            </div>
+            
+            <div class="shop-content">
+                <div class="shop-info">
+                    <h3>Your Coins: <span class="coin-count">{{ user_data.coins|default(0) }}</span></h3>
+                    <p class="shop-note">Use your coins to purchase exclusive items and rewards.</p>
+                </div>
+                
+                <div class="shop-items-container">
+                    {% if shop_items %}
+                        {% for item in shop_items %}
+                        <div class="shop-item">
+                            <div class="item-image">
+                                <img src="{{ item.image }}" alt="{{ item.name }}">
+                            </div>
+                            <div class="item-details">
+                                <h3 class="item-name">{{ item.name }}</h3>
+                                <div class="item-meta">
+                                    <span class="item-price"><i class="fas fa-coins"></i> {{ item.price }}</span>
+                                    <span class="item-validity">Valid for {{ item.validity }} days</span>
+                                </div>
+                                <button class="buy-button" data-item-id="{{ item.id }}" data-item-name="{{ item.name }}" data-item-price="{{ item.price }}">
+                                    <i class="fas fa-shopping-cart"></i> Buy Now
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="no-items-message">
+                            <p>No items available in the shop at the moment. Check back later!</p>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="profile-actions">
+                    <a href="{{ url_for('profile') }}" class="profile-btn secondary">
+                        <i class="fas fa-user"></i>
+                        Back to Profile
+                    </a>
+                    <a href="{{ url_for('redeem_code') }}" class="profile-btn secondary">
+                        <i class="fas fa-gift"></i>
+                        Redeem Code
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Purchase Modal -->
+<div id="purchaseModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h2 class="modal-title">Complete Your Purchase</h2>
+        <div class="purchase-details">
+            <p>You are purchasing: <span id="modalItemName"></span></p>
+            <p>Price: <span id="modalItemPrice"></span> coins</p>
+        </div>
+        <form id="purchaseForm" action="{{ url_for('purchase_item') }}" method="POST">
+            <input type="hidden" id="itemId" name="item_id">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" class="form-input" 
+                    placeholder="Enter your email address" required>
+                <small class="form-text">We'll send your purchase details to this email.</small>
+            </div>
+            <button type="submit" class="confirm-button">
+                <i class="fas fa-check-circle"></i> Confirm Purchase
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

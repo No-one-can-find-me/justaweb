@@ -3,7 +3,8 @@
     "password": "1976Abcd?",
     "display_name": "Huntsman",
     "bio": "Admin and creator of Huntsman Space",
-    "joined_date": "2025-07-14"
+    "joined_date": "2025-07-14",
+    "coins": 1000
   },
   "testuser123": "password123",
   "shadowub": {

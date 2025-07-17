@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Redeem Code - Huntsman Space{% endblock %}
+
+{% block scripts %}
+{% endblock %}
+
+{% block content %}
+<section class="auth-section redeem-page">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1 class="auth-title">Redeem Code</h1>
+                <p class="auth-subtitle">Enter your code to claim rewards</p>
+            </div>
+            
+            <div class="redeem-content">
+                <form action="{{ url_for('redeem_code') }}" method="POST" class="auth-form">
+                    <div class="form-group">
+                        <label for="code">Redeem Code</label>
+                        <input type="text" id="code" name="code" class="form-input" 
+                            placeholder="Enter your redeem code (4-16 characters)" 
+                            minlength="4" maxlength="16" required>
+                        <small class="form-text">Code must be between 4 and 16 characters.</small>
+                    </div>
+                    
+                    <button type="submit" class="redeem-button">
+                        <i class="fas fa-gift"></i> Redeem
+                    </button>
+                </form>
+                
+                <div class="redeem-info">
+                    <h3>Your Coins: <span class="coin-count">{{ user_data.coins|default(0) }}</span></h3>
+                    <p class="redeem-note">Redeem codes can be used to claim special rewards and coins.</p>
+                </div>
+                
+                <div class="profile-actions">
+                    <a href="{{ url_for('profile') }}" class="profile-btn secondary">
+                        <i class="fas fa-user"></i>
+                        Back to Profile
+                    </a>
+                    <a href="{{ url_for('shop') }}" class="profile-btn secondary">
+                        <i class="fas fa-store"></i>
+                        Visit Shop
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
