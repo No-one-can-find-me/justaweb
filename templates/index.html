@@ -12,17 +12,27 @@
                     <i class="fab fa-youtube"></i>
                     <span>YouTube</span>
                 </a>
-                {% if session.user %}
-                    <a href="{{ url_for('chat') }}" class="social-btn chat-btn">
-                        <i class="fas fa-comments"></i>
-                        <span>Lets Chat</span>
-                    </a>
-                {% else %}
-                    <a href="{{ url_for('login') }}" class="social-btn chat-btn">
-                        <i class="fas fa-comments"></i>
-                        <span>Lets Chat</span>
-                    </a>
-                {% endif %}
+                <div class="main-buttons">
+                    {% if session.user %}
+                        <a href="{{ url_for('chat') }}" class="social-btn chat-btn">
+                            <i class="fas fa-comments"></i>
+                            <span>Lets Chat</span>
+                        </a>
+                        <a href="{{ url_for('minigames') }}" class="social-btn games-btn">
+                            <i class="fas fa-gamepad"></i>
+                            <span>Play Games</span>
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('login') }}" class="social-btn chat-btn">
+                            <i class="fas fa-comments"></i>
+                            <span>Lets Chat</span>
+                        </a>
+                        <a href="{{ url_for('minigames') }}" class="social-btn games-btn">
+                            <i class="fas fa-gamepad"></i>
+                            <span>Play Games</span>
+                        </a>
+                    {% endif %}
+                </div>
             </div>
             <div class="secondary-buttons">
                 <a href="https://kick.com/huntsman-gg" target="_blank" class="social-btn kick-btn">

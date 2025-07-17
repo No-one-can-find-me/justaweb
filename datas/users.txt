@@ -15,6 +15,7 @@
   },
   "hunt": {
     "password": "1976abcd?",
+    "password": "1976abcd?",
     "display_name": null,
     "bio": null,
     "joined_date": "2025-07-14"

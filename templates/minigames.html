@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Mini Games - Huntsman Space{% endblock %}
+
+{% block content %}
+<section class="minigames-section">
+    <div class="container">
+        <div class="minigames-header">
+            <h1 class="minigames-title">Mini Games</h1>
+            <p class="minigames-subtitle">Play games and have fun!</p>
+        </div>
+        
+        <div class="maintenance-container">
+            <div class="maintenance-icon">
+                <i class="fas fa-tools"></i>
+            </div>
+            <h2 class="maintenance-title">Under Maintenance</h2>
+            <p class="maintenance-message">
+                We're currently working on some awesome mini games for you to enjoy!
+                Check back soon for exciting games where you can have fun with friends.
+            </p>
+            <div class="coming-soon">
+                <h3>Coming Soon:</h3>
+                <ul class="games-list">
+                    <li><i class="fas fa-moon"></i> Werewolf</li>
+                    <li><i class="fas fa-ghost"></i> Haunting Nights</li>
+                </ul>
+            </div>
+            <a href="{{ url_for('home') }}" class="back-button">
+                <i class="fas fa-arrow-left"></i> Back to Home
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}

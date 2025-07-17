@@ -486,35 +486,48 @@ body::before {
 
 .social-buttons {
     display: flex;
-    gap: 3rem;
+    gap: 1rem;
     flex-wrap: wrap;
     align-items: flex-start;
+    justify-content: flex-start;
+    max-width: 1000px;
 }
 
 .primary-buttons {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-    align-items: center;
+    gap: 0.5rem;
+    align-items: flex-start;
+    flex-wrap: wrap;
 }
 
 .secondary-buttons {
     display: flex;
-    gap: 2rem;
+    gap: 1rem;
     flex-wrap: wrap;
-    align-items: center;
+    align-items: flex-start;
 }
 
 /* Responsive layout for smaller screens */
 @media (max-width: 768px) {
     .social-buttons {
         flex-direction: column;
-        align-items: center;
-        gap: 2rem;
+        align-items: flex-start;
+        gap: 1rem;
     }
     
     .secondary-buttons {
-        justify-content: center;
+        justify-content: flex-start;
+    }
+    
+    .main-buttons {
+        flex-direction: row;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+    
+    .hero-content {
+        padding-left: 1rem;
     }
     
     /* Hide home button on mobile */
@@ -563,8 +576,12 @@ body::before {
         min-width: 120px;
     }
     
-    .primary-buttons, .secondary-buttons {
-        gap: 1rem;
+    .primary-buttons, .secondary-buttons, .main-buttons {
+        gap: 0.8rem;
+    }
+    
+    .main-buttons {
+        flex-direction: row;
     }
 }
 
@@ -572,7 +589,7 @@ body::before {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 1rem 2.5rem;
+    padding: 0.8rem 2rem;
     border-radius: 50px;
     text-decoration: none;
     font-weight: 600;
@@ -585,6 +602,7 @@ body::before {
     color: white;
     min-width: 140px;
     justify-content: center;
+    margin-right: 0.5rem;
 }
 
 .youtube-btn {
@@ -593,18 +611,28 @@ body::before {
 
 .kick-btn {
     border-color: #00ff00;
-    margin-left: -2.5rem;
+    margin-left: -210px;
 }
 
 .discord-btn {
     border-color: #5865f2;
-    margin-left: -0.5rem;
+}
+
+.main-buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    margin-top: 0.5rem;
+    align-items: flex-start;
+    justify-content: flex-start;
 }
 
 .chat-btn {
     border-color: #4a9eff;
-    margin-top: 0.5rem;
-    margin-left: 1rem;
+}
+
+.games-btn {
+    border-color: #ff8844;
 }
 
 .social-btn:hover {
@@ -1968,6 +1996,154 @@ textarea.form-input {
 }
 
 .confirm-button:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Mini Games Styles */
+.minigames-section {
+    padding: 3rem 1rem;
+    min-height: calc(100vh - 140px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary-bg);
+}
+
+.minigames-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.minigames-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 2.5rem;
+    color: var(--neon-blue);
+    margin-bottom: 0.5rem;
+    text-shadow: 0 0 10px rgba(74, 158, 255, 0.5);
+}
+
+.minigames-subtitle {
+    color: var(--secondary-text);
+    font-size: 1.2rem;
+}
+
+.maintenance-container {
+    background: var(--secondary-bg);
+    border-radius: 12px;
+    padding: 3rem 2rem;
+    text-align: center;
+    max-width: 700px;
+    margin: 0 auto;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--accent-bg);
+    position: relative;
+    overflow: hidden;
+}
+
+.maintenance-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(74, 158, 255, 0.05), rgba(255, 136, 68, 0.05));
+    z-index: 0;
+}
+
+.maintenance-icon {
+    font-size: 4rem;
+    color: var(--neon-orange);
+    margin-bottom: 1.5rem;
+    position: relative;
+    z-index: 1;
+}
+
+.maintenance-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 2rem;
+    color: var(--neon-orange);
+    margin-bottom: 1rem;
+    position: relative;
+    z-index: 1;
+}
+
+.maintenance-message {
+    color: var(--primary-text);
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+    position: relative;
+    z-index: 1;
+}
+
+.coming-soon {
+    background: var(--accent-bg);
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    position: relative;
+    z-index: 1;
+}
+
+.coming-soon h3 {
+    color: var(--neon-green);
+    margin-bottom: 1rem;
+    font-family: 'Orbitron', monospace;
+}
+
+.games-list {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.games-list li {
+    padding: 0.8rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--primary-text);
+    transition: all 0.3s ease;
+}
+
+.games-list li:hover {
+    transform: translateY(-3px);
+    background: rgba(74, 158, 255, 0.2);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.games-list i {
+    color: var(--neon-blue);
+}
+
+.back-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, var(--neon-blue), var(--neon-green));
+    color: var(--primary-text);
+    padding: 0.8rem 1.5rem;
+    border-radius: 25px;
+    font-weight: bold;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    position: relative;
+    z-index: 1;
+}
+
+.back-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(74, 158, 255, 0.4);
+}
+
+.back-button:active {
     transform: translateY(1px);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }

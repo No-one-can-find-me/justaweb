@@ -739,6 +739,10 @@ def shop():
     
     return render_template('shop.html', user_data=user_data, shop_items=shop_items)
 
+@app.route('/minigames')
+def minigames():
+    return render_template('minigames.html')
+
 @app.route('/purchase', methods=['POST'])
 def purchase_item():
     if 'user' not in session:
