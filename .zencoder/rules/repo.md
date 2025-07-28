@@ -6,13 +6,13 @@ alwaysApply: true
 # Huntsman Space - Gaming Website Information
 
 ## Summary
-Huntsman Space is a professional dark-themed gaming website built with Flask, featuring a Discord-like chat system and modern UI for gamers. It includes user authentication, real-time messaging, social media integration, and responsive design that works on both desktop and mobile devices.
+Huntsman Space is a professional dark-themed gaming website built with Flask, featuring modern UI for gamers. It includes user authentication, social media integration, and responsive design that works on both desktop and mobile devices.
 
 ## Structure
 - **app.py**: Main Flask application entry point
 - **templates/**: HTML templates using Jinja2 templating engine
 - **static/**: CSS, JavaScript, and image assets
-- **datas/**: Text files for storing user data and chat messages
+- **datas/**: Text files for storing user data
 - **Procfile**: Deployment configuration for hosting platforms
 - **railway.json**: Railway-specific deployment configuration
 - **render.yaml**: Render-specific deployment configuration
@@ -75,24 +75,19 @@ python app.py
 - base.html: Base template with common elements
 - index.html: Home page with welcome message and features
 - login.html/register.html: User authentication pages
-- chat.html: Discord-like chat interface
 - profile.html: User profile management
 - shop.html: Virtual shop interface
 - minigames.html: Gaming features
 
 **Data Storage**:
 - datas/users.txt: JSON file storing user credentials and profiles
-- datas/chats.txt: JSON file storing chat messages
 - datas/redeem_codes.txt: Stores redemption codes
 - datas/shop_items.txt: Stores shop items
 
 ## Features
 - User authentication with enhanced validation
 - Profile management (display name, bio)
-- Real-time chat with Discord-like interface
 - Virtual currency system with shop and redemption codes
-- Active user tracking and status indicators
-- Rate limiting for message sending
 - Admin user functionality
 - Responsive design with custom CSS animations
 - Flash message notification system

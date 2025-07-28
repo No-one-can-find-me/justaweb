@@ -11,18 +11,11 @@ app.permanent_session_lifetime = timedelta(hours=24)  # Session expires after 24
 
 # File paths for data storage
 USERS_FILE = 'datas/users.txt'
-COMMENTS_FILE = 'datas/chats.txt'
 REDEEM_CODES_FILE = 'datas/redeem_codes.txt'
 SHOP_ITEMS_FILE = 'datas/shop_items.txt'
 
 # Admin users
 ADMIN_USERS = ['huntsmangg']
-
-# Rate limiting: Store last message time per user
-user_last_message = {}
-
-# Track active users (in real app, you'd use Redis or a database)
-active_users = {}
 
 def load_users():
     """Load users from users.txt file"""
@@ -70,98 +63,7 @@ def get_user_data(username):
     
     return None
 
-def load_messages():
-    """Load messages from chats.txt file and enhance with profile picture info"""
-    try:
-        if os.path.exists(COMMENTS_FILE):
-            with open(COMMENTS_FILE, 'r', encoding='utf-8') as f:
-                content = f.read().strip()
-                if content:
-                    messages = json.loads(content)
-                    # Enhance messages with profile picture information
-                    for message in messages:
-                        message['profile_picture'] = get_user_profile_picture(message.get('user', ''))
-                    return messages
-        return []
-    except (json.JSONDecodeError, FileNotFoundError):
-        return []
 
-def get_user_profile_picture(username):
-    """Get profile picture path for a user"""
-    if username == 'huntsmangg':
-        return None  # Admin uses crown icon
-    else:
-        # For now, return None to use CSS-generated avatars
-        # In the future, you can implement actual profile picture uploads
-        return None
-
-def update_user_activity(username):
-    """Update user's last activity time"""
-    active_users[username] = {
-        'last_seen': datetime.now(),
-        'is_admin': username in ADMIN_USERS,
-        'profile_picture': get_user_profile_picture(username)
-    }
-
-def get_active_members():
-    """Get list of all members, both active and offline"""
-    cutoff_time = datetime.now() - timedelta(minutes=5)
-    members_list = []
-    
-    # Get all registered users
-    all_users = load_users()
-    
-    # Track which users are active
-    active_usernames = set()
-    
-    # Clean up old entries and collect active users
-    users_to_remove = []
-    for username, data in active_users.items():
-        if data['last_seen'] > cutoff_time:
-            members_list.append({
-                'username': username,
-                'is_admin': data['is_admin'],
-                'profile_picture': data['profile_picture'],
-                'last_seen': data['last_seen'].strftime('%Y-%m-%d %H:%M:%S'),
-                'status': 'online'
-            })
-            active_usernames.add(username)
-        else:
-            users_to_remove.append(username)
-    
-    # Remove inactive users from active_users dict
-    for username in users_to_remove:
-        del active_users[username]
-    
-    # Add offline users
-    for username in all_users:
-        if username not in active_usernames:
-            members_list.append({
-                'username': username,
-                'is_admin': username in ADMIN_USERS,
-                'profile_picture': get_user_profile_picture(username),
-                'last_seen': None,
-                'status': 'offline'
-            })
-    
-    return members_list
-
-def save_messages(messages):
-    """Save messages to chats.txt file"""
-    try:
-        os.makedirs(os.path.dirname(COMMENTS_FILE), exist_ok=True)
-        with open(COMMENTS_FILE, 'w', encoding='utf-8') as f:
-            json.dump(messages, f, indent=2, ensure_ascii=False)
-    except Exception as e:
-        print(f"Error saving messages: {e}")
-        # In production, you'd want to log this properly
-
-def get_next_message_id():
-    """Get the next available message ID"""
-    messages = load_messages()
-    if not messages:
-        return 1
-    return max(msg.get('id', 0) for msg in messages) + 1
 
 # Initialize with admin user if users.txt is empty
 def load_redeem_codes():
@@ -205,6 +107,21 @@ def save_shop_items(items):
             json.dump(items, f, indent=2, ensure_ascii=False)
     except Exception as e:
         print(f"Error saving shop items: {e}")
+
+def load_messages():
+    """Load messages from messages file (placeholder for chat functionality)"""
+    # For now, return empty list since chat isn't fully implemented
+    return []
+
+def save_messages(messages):
+    """Save messages to messages file (placeholder for chat functionality)"""
+    # For now, do nothing since chat isn't fully implemented
+    pass
+
+def get_next_message_id():
+    """Get next message ID (placeholder for chat functionality)"""
+    # For now, return a simple timestamp-based ID
+    return int(datetime.now().timestamp() * 1000)
 
 def initialize_admin_user():
     """Initialize admin user if not exists"""
@@ -314,30 +231,7 @@ def register():
     
     return render_template('register.html')
 
-@app.route('/chat')
-def chat():
-    """Render the chat page"""
-    if 'user' not in session:
-        flash('Please login to access the chat!', 'error')
-        return redirect(url_for('login'))
-    
-    # Update user activity
-    update_user_activity(session['user'])
-    
-    # Load messages
-    messages = load_messages()
-    
-    # Define channel descriptions
-    channel_descriptions = {
-        'general': 'Welcome to Huntsman Space chat',
-        'anime': 'Discuss your favorite anime series and characters',
-        'wuthering-waves': 'Talk about Wuthering Waves gameplay and strategies',
-        'clips-and-memes': 'Share your favorite gaming clips and memes'
-    }
-    
-    return render_template('chat.html', 
-                          messages=messages, 
-                          channel_descriptions=channel_descriptions)
+
 
 @app.route('/profile')
 def profile():
@@ -434,110 +328,11 @@ def update_profile():
 @app.route('/logout')
 def logout():
     if 'user' in session:
-        user = session['user']
         session.clear()  # Clear all session data
-        # Clean up rate limiting data for logged out user
-        if user in user_last_message:
-            del user_last_message[user]
         flash('You have been logged out!', 'info')
     return redirect(url_for('home'))
 
-@app.route('/send_message', methods=['POST'])
-def send_message():
-    """Send a new message"""
-    if 'user' not in session:
-        return jsonify({'success': False, 'error': 'Not logged in'}), 401
-    
-    data = request.get_json()
-    if not data or 'message' not in data:
-        return jsonify({'success': False, 'error': 'No message provided'}), 400
-    
-    message_text = data['message'].strip()
-    if not message_text:
-        return jsonify({'success': False, 'error': 'Message cannot be empty'}), 400
-    
-    if len(message_text) > 2000:
-        return jsonify({'success': False, 'error': 'Message too long (max 2000 characters)'}), 400
-    
-    # Rate limiting
-    current_user = session['user']
-    current_time = datetime.now()
-    
-    # Admin bypass rate limiting
-    if current_user not in ADMIN_USERS:
-        if current_user in user_last_message:
-            time_diff = current_time - user_last_message[current_user]
-            if time_diff < timedelta(seconds=0.001):
-                return jsonify({'success': False, 'error': 'Please wait before sending another message'}), 429
-        
-    user_last_message[current_user] = current_time
-    
-    messages = load_messages()
-    
-    # Get channel from request, default to general
-    channel = data.get('channel', 'general')
-    
-    message = {
-        'id': get_next_message_id(),
-        'user': session['user'],
-        'text': message_text,
-        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-        'profile_picture': get_user_profile_picture(session['user']),
-        'channel': channel
-    }
-    
-    messages.append(message)
-    save_messages(messages)
-    
-    return jsonify({'success': True, 'message': message})
 
-@app.route('/get_messages')
-def get_messages():
-    if 'user' not in session:
-        return jsonify({'success': False, 'error': 'Not logged in'}), 401
-    
-    messages = load_messages()
-    return jsonify({'success': True, 'messages': messages})
-
-@app.route('/get_new_messages')
-def get_new_messages():
-    if 'user' not in session:
-        return jsonify({'success': False, 'error': 'Not logged in'}), 401
-    
-    # Update user activity on each poll
-    update_user_activity(session['user'])
-    
-    since_id = request.args.get('since', 0, type=int)
-    messages = load_messages()
-    
-    # Get all current message IDs
-    current_message_ids = [msg.get('id', 0) for msg in messages]
-    
-    # Filter messages newer than the specified ID
-    new_messages = [msg for msg in messages if msg.get('id', 0) > since_id]
-    
-    return jsonify({
-        'success': True, 
-        'messages': new_messages,
-        'current_message_ids': current_message_ids
-    })
-
-@app.route('/get_members')
-def get_members():
-    """Get list of active members"""
-    if 'user' not in session:
-        return jsonify({'success': False, 'error': 'Not logged in'}), 401
-    
-    # Update current user's activity
-    update_user_activity(session['user'])
-    
-    # Get active members
-    members = get_active_members()
-    
-    return jsonify({
-        'success': True,
-        'members': members
-    })
 
 @app.route('/get_user_profile')
 def get_user_profile():
@@ -742,6 +537,16 @@ def shop():
 @app.route('/minigames')
 def minigames():
     return render_template('minigames.html')
+
+@app.route('/chat')
+def chat():
+    if 'user' not in session:
+        flash('Please login to access the chat!', 'error')
+        return redirect(url_for('login'))
+    
+    # For now, redirect to home since chat functionality isn't implemented yet
+    flash('Chat feature coming soon!', 'info')
+    return redirect(url_for('home'))
 
 @app.route('/purchase', methods=['POST'])
 def purchase_item():

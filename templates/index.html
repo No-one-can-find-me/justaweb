@@ -13,25 +13,10 @@
                     <span>YouTube</span>
                 </a>
                 <div class="main-buttons">
-                    {% if session.user %}
-                        <a href="{{ url_for('chat') }}" class="social-btn chat-btn">
-                            <i class="fas fa-comments"></i>
-                            <span>Lets Chat</span>
-                        </a>
-                        <a href="{{ url_for('minigames') }}" class="social-btn games-btn">
-                            <i class="fas fa-gamepad"></i>
-                            <span>Play Games</span>
-                        </a>
-                    {% else %}
-                        <a href="{{ url_for('login') }}" class="social-btn chat-btn">
-                            <i class="fas fa-comments"></i>
-                            <span>Lets Chat</span>
-                        </a>
-                        <a href="{{ url_for('minigames') }}" class="social-btn games-btn">
-                            <i class="fas fa-gamepad"></i>
-                            <span>Play Games</span>
-                        </a>
-                    {% endif %}
+                    <a href="{{ url_for('minigames') }}" class="social-btn games-btn">
+                        <i class="fas fa-gamepad"></i>
+                        <span>Play Games</span>
+                    </a>
                 </div>
             </div>
             <div class="secondary-buttons">
@@ -70,38 +55,7 @@
     </div>
 </section>
 
-<section class="quick-chat-section">
-    <div class="container">
-        <h2 class="section-title">Join the Conversation</h2>
-        <div class="chat-preview">
-            <div class="chat-promo-card">
-                <div class="chat-icon">
-                    <i class="fas fa-comments"></i>
-                </div>
-                <h3>Real-time Chat</h3>
-                <p>Connect with the community in our Discord-like chat system!</p>
-                <ul class="chat-features">
-                    <li><i class="fas fa-check"></i> Send and edit messages</li>
-                    <li><i class="fas fa-check"></i> Reply to conversations</li>
-                    <li><i class="fas fa-check"></i> Real-time interactions</li>
-                </ul>
-            </div>
-        </div>
-        <div class="chat-cta">
-            {% if session.user %}
-                <a href="{{ url_for('chat') }}" class="cta-btn">
-                    <i class="fas fa-comments"></i>
-                    Enter Chat Room
-                </a>
-            {% else %}
-                <a href="{{ url_for('login') }}" class="cta-btn">
-                    <i class="fas fa-sign-in-alt"></i>
-                    Login to Chat
-                </a>
-            {% endif %}
-        </div>
-    </div>
-</section>
+
 
 <div class="scroll-indicator">
     <div class="scroll-arrow">
